@@ -1,6 +1,6 @@
 //Pin definitions and initialisation for Paramotor Multi Sensor
 //Simon Richards-Martin
-//Usage: #include "include/Pins.h", call pinSetup() and commsSetup() once in setup() routine
+//Usage: #include "include/Init.h", call pinSetup() and commsSetup() once in setup() routine
 
 /*
 	General IDE Configuration
