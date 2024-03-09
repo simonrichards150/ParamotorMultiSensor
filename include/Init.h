@@ -85,6 +85,7 @@
 #define TACH_EN		42	//Power enable for external sensor - high=on, low=off
 #define TACH_PULSE	47	//Pulse input
 
+#include <Arduino.h>
 #include <Wire.h>
 
 void pinSetup()
