@@ -34,7 +34,7 @@ void GPSHandler::begin() //Initialise GPS
 	setPwr(1); //Turn on the GPS receiver
 	Serial1.setPins(GPS_TXO, GPS_RXI); //Second serial port for GPS
 	Serial1.begin(9600); //Default 9600bps
-	delay(1000); //Not sure why this is needed...first command is ignored if sent too soon
+	delay(500); //Not sure why this is needed...first command is ignored if sent too soon
 }
 
 void GPSHandler::reset()
@@ -116,7 +116,7 @@ void GPSHandler::tick(int passthrough) //Must be called often - updates the GPS 
 }
 
 
-void GPSHandler::GPSWrite(char *str)
+void GPSHandler::GPSWrite(char *str) //Send something to GPS receiver
 {
 	Serial1.print(str); //Send command
 	Serial1.print("*");

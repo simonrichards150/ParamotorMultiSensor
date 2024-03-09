@@ -23,6 +23,9 @@
 	USB Mode: Hardware CDC and JTAG	
 */
 
+#ifndef INIT_H
+#define INIT_H
+
 //Buttons - idle low, high when pressed
 #define BTN1	1	//Top button
 #define BTN2	2	//Middle button
@@ -138,3 +141,5 @@ void commsSetup()
 	Wire.setPins(TC_SDA, TC_SCL); //Set up I2C pins
 	Wire.begin(); //Start I2C
 }
+
+#endif
