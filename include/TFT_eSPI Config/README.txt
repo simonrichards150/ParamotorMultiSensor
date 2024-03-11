@@ -1,0 +1,1 @@
+Copy the contents of this folder (not the readme) to the TFT_eSPI library folder (usually Documents/Arduino/libraries/TFT_eSPI) and overwrite existing files with same names.

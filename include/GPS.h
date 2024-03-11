@@ -28,7 +28,7 @@ public:
 	
 private:
 	char NMEAParserBuffer[128];
-	char GPSRxBuffer[1024];
+	char GPSRxBuffer[256];
 	int NMEAParserIndex = 0;
 	
 	
@@ -64,7 +64,7 @@ void GPSHandler::reset()
 void GPSHandler::configure()
 {
 	//Set Update Rate
-	int GPSUpdateRate = 2; //Update rate in Hz
+	int GPSUpdateRate = 1; //Update rate in Hz
 	
 	GPSUpdateRate = 1000 / GPSUpdateRate;
 	char GPSUpdateRateSelect[13];
@@ -183,6 +183,7 @@ void GPSHandler::parseNMEA(char c) //Assemble NMEA sentences from received data
 				Serial.write(NMEAParserBuffer[n]); 
 			}
 		*/
+		
 		memset(NMEAParserBuffer, '\0', sizeof(NMEAParserBuffer)); //Clear the buffer ready for a new sentence
 		NMEAParserIndex = 0; //Reset the index
 	}
@@ -194,7 +195,9 @@ void GPSHandler::parseNMEA(char c) //Assemble NMEA sentences from received data
 void GPSHandler::extractNMEA(char *str, int len) //Parse each NMEA sentence and separate the fields (Checksums are ignored)
 {
 	//Separate the NMEA sentence into individual fields
-	//Serial.printf("%s", str);
+	Serial.println("+++");
+	Serial.printf("%s", str);
+	Serial.println("---");
 	char* token;
 	String NMEAParts[21];
 	int i;
@@ -288,7 +291,7 @@ void GPSHandler::extractNMEA(char *str, int len) //Parse each NMEA sentence and 
 	else //Discard anything else
 	{
 		//Serial.println("A malformed NMEA sentence was discarded");
-		return;
+		//return;
 	}
 	
 }
