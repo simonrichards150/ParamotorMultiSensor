@@ -4,6 +4,7 @@
 #ifndef GPS_H
 #define GPS_H
 #include <Arduino.h>
+#include <time.h>
 
 class GPSHandler //Begin class definition
 {
@@ -16,6 +17,9 @@ public:
 	void tick(int);
 	void parseNMEA(char);
 	void printVars();
+	int epochTime();
+	
+	int timeValid = 0;
 	
 	//It's not nice to expose all the variables but it's easier than writing accessor methods for all of them
 	String fix, lat, lon, latNS, lonEW, alt, sats, pdop, hdop, vdop, hdg, spd, mins, secs, ms, hours, day, month, year = "";
@@ -26,6 +30,7 @@ private:
 	char NMEAParserBuffer[128];
 	char GPSRxBuffer[1024];
 	int NMEAParserIndex = 0;
+	
 	
 	void GPSWrite(char*);
 	int calculateChecksum(char*);
@@ -42,6 +47,8 @@ GPSHandler::GPSHandler() //Constructor
 
 void GPSHandler::begin() //Initialise GPS
 {
+	setPwr(0);
+	delay(200);
 	setPwr(1); //Turn on the GPS receiver
 	Serial1.setPins(GPS_TXO, GPS_RXI); //Second serial port for GPS
 	Serial1.begin(9600); //Default 9600bps
@@ -243,16 +250,26 @@ void GPSHandler::extractNMEA(char *str, int len) //Parse each NMEA sentence and 
 	}
 	else if (NMEAParts[0] == "$GNVTG")
 	{
-		hdg = NMEAParts[1]; //Course over Ground, relative to true north (Degrees)
 		spd = NMEAParts[7]; //Ground speed (KPH)
+		
+		if (spd.toInt() > 0.1) //If stationary, heading is likely to be wrong
+		{
+			hdg = NMEAParts[1]; //Course over Ground, relative to true north (Degrees)
+		}
+		else
+		{
+			hdg = "INVALID"; //Warn of incorrect heading
+		}
+		
 	}
 	else if (NMEAParts[0] == "$GNZDA")
 	{
 		
 		//Check if there is a time provided
-		if ((NMEAParts[1] == "NULL") || (NMEAParts[1] == ""))
+		if ((NMEAParts[1] == "NULL") || (NMEAParts[1] == "") || (NMEAParts[2] == "NULL") || (NMEAParts[2] == "") || (NMEAParts[3] == "NULL") || (NMEAParts[3] == "") || (NMEAParts[4] == "NULL") || (NMEAParts[4] == ""))
 		{
 			//Invalid time
+			timeValid = 0;
 			return;
 		}
 		else
@@ -264,6 +281,8 @@ void GPSHandler::extractNMEA(char *str, int len) //Parse each NMEA sentence and 
 		day = NMEAParts[2];
 		month = NMEAParts[3];
 		year = NMEAParts[4];
+		
+		timeValid = 1;
 		}
 	}
 	else //Discard anything else
@@ -332,6 +351,31 @@ void GPSHandler::printVars() //Print all the GPS data
 	
 	Serial.print("Year: ");
 	Serial.println(year);
+}
+
+//Get epoch time in time_t format - depending on when called, could be up to a second of error
+int GPSHandler::epochTime()
+{	
+	if (timeValid)
+	{
+		struct tm t;
+		time_t t_of_day;
+
+		t.tm_year = year.toInt()-1900;  
+		t.tm_mon = month.toInt()-1;           
+		t.tm_mday = day.toInt();          
+		t.tm_hour = hours.toInt();
+		t.tm_min = mins.toInt();
+		t.tm_sec = secs.toInt();
+		t.tm_isdst = -1;        
+		t_of_day = mktime(&t);
+		
+		return (int)t_of_day;
+	}
+	else
+	{
+		return -1; //Time is not valid
+	}
 }
 
 #endif
