@@ -162,7 +162,7 @@ bool GPSHandler::validNMEASentence(char *str) //Validate incoming NMEA sentences
 	
 	if (len < 10)
 	{
-		Serial.printf("LENGTH New: %s\n", str);
+		//Serial.printf("LENGTH New: %s\n", str);
 		return false; //If sentence is suspiciously short, return error
 	}
 	
@@ -176,14 +176,14 @@ bool GPSHandler::validNMEASentence(char *str) //Validate incoming NMEA sentences
 	//Check the first character is $
 	if (str[0] != '$')
 	{
-		Serial.printf("DOLLAR New: %s\n", str);
+		//Serial.printf("DOLLAR New: %s\n", str);
 		return false;
 	}
 	
 	//Check the third to last character is *
 	if (str[len-3] != '*')
 	{
-		Serial.printf("ASTERISK New: %s\n", str);
+		//Serial.printf("ASTERISK New: %s\n", str);
 		return false;
 	}
 	
