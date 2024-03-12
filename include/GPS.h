@@ -19,22 +19,22 @@ public:
 	void printVars();
 	int epochTime();
 	
-	int timeValid = 0;
+	bool timeValid = false;
 	
 	//It's not nice to expose all the variables but it's easier than writing accessor methods for all of them
 	String fix, lat, lon, latNS, lonEW, alt, sats, pdop, hdop, vdop, hdg, spd, mins, secs, ms, hours, day, month, year = "";
 	
 	
 	
+	
 private:
-	char NMEAParserBuffer[128];
-	char GPSRxBuffer[256];
-	int NMEAParserIndex = 0;
-	
-	
 	void GPSWrite(char*);
 	int calculateChecksum(char*);
-	void extractNMEA(char*, int);
+	bool validNMEASentence(char*);
+	void extractNMEA(char*);
+	
+	char NMEAParserBuffer[256] = {'\0'};
+	int NMEAParserIndex = 0;
 	
 }; //End class definition
 
@@ -64,7 +64,7 @@ void GPSHandler::reset()
 void GPSHandler::configure()
 {
 	//Set Update Rate
-	int GPSUpdateRate = 1; //Update rate in Hz
+	int GPSUpdateRate = 5; //Update rate in Hz
 	
 	GPSUpdateRate = 1000 / GPSUpdateRate;
 	char GPSUpdateRateSelect[13];
@@ -105,11 +105,11 @@ void GPSHandler::setPwr(int pwr)
 {
 	if(pwr)
 	{
-		digitalWrite(GPS_EN, HIGH);
+		digitalWrite(GPS_EN, HIGH); //Turn on 
 	}
 	else
 	{
-		digitalWrite(GPS_EN, LOW);
+		digitalWrite(GPS_EN, LOW); //Turn off
 	}
 }
 
@@ -117,25 +117,19 @@ void GPSHandler::setPwr(int pwr)
 
 void GPSHandler::tick(int passthrough) //Must be called often - updates the GPS data from the UART
 {
-	int GPSRxBufferLength = 0;
+	int GPSRxAvailable = 0;
+	char currentchar = '\0';
 	
-	if(Serial1.available() > 0) //If there's something in the GPS RX buffer
+	GPSRxAvailable = Serial1.available(); //Get the number of bytes available in the GPS RX buffer
+	//Serial.printf("Available: %d\n", GPSRxAvailable); 
+	while(Serial1.available()) //Read the GPS RX buffer contents
 	{
-		GPSRxBufferLength = Serial1.available(); //Get the length of the RX buffer
-		
-		for (int n = 0; n < GPSRxBufferLength; n++) //For each byte in the RX buffer
-		{
-			GPSRxBuffer[n] = Serial1.read(); //Read the byte and add it to the new buffer
-			parseNMEA(GPSRxBuffer[n]); //Send the byte to the NMEA parser
-		}
-		
+		currentchar = Serial1.read();
 		if (passthrough) //If passthrough mode is selected, copy the GPS data to the PC UART
 		{
-			for (int n = 0; n < GPSRxBufferLength; n++) //For each byte in the stored buffer
-			{
-				Serial.write(GPSRxBuffer[n]); //Read the byte and add it to the PC TX buffer
-			}
+			Serial.write(currentchar);
 		}
+		parseNMEA(currentchar); //Send byte to NMEA parser
 	}
 }
 
@@ -146,58 +140,129 @@ void GPSHandler::GPSWrite(char *str) //Send something to GPS receiver
 	Serial1.print("*");
 	Serial1.printf("%02X", calculateChecksum(str)); //Send checksum
 	Serial1.println(); //Send CRLF
-	
-	/*
-	Serial.print(str); //Send command
-	Serial.print("*");
-	Serial.printf("%02X", calculateChecksum(str)); //Send checksum
-	Serial.println(); //Send CRLF
-	*/
 }
 
-int GPSHandler::calculateChecksum(char *str) //Calculate checksum for NMEA messages
+int GPSHandler::calculateChecksum(char *str) //Calculate checksum for general NMEA messages
 {
 	int crc = 0;
-	int len = strlen(str);
+	int len = strlen(str); //Length excluding trailing null characters
 	
-	for (int i = 1; i < len; i++) 
+	for (int i = 1; i < len; i++) //Ignore the leading $
 	{
         crc ^= str[i];
     }
 
 	return crc;
+}
+
+bool GPSHandler::validNMEASentence(char *str) //Validate incoming NMEA sentences
+{
+	//Check the minimum length
+	int len = strlen(str); //Length excluding trailing null characters
 	
+	if (len < 10)
+	{
+		Serial.printf("LENGTH New: %s\n", str);
+		return false; //If sentence is suspiciously short, return error
+	}
+	
+	
+	//Remove the last two bytes (CRLF)
+	str[len-1] = '\0';
+	str[len-2] = '\0';
+	len -= 2;
+	
+	
+	//Check the first character is $
+	if (str[0] != '$')
+	{
+		Serial.printf("DOLLAR New: %s\n", str);
+		return false;
+	}
+	
+	//Check the third to last character is *
+	if (str[len-3] != '*')
+	{
+		Serial.printf("ASTERISK New: %s\n", str);
+		return false;
+	}
+	
+	
+	//Check the last two characters form a valid hex value for CRC
+	char rawCRC[4] = {'\0'}; 
+	rawCRC[0] = str[len-2];
+	rawCRC[1] = str[len-1];
+	
+	//Serial.printf("CRC: %s\n", rawCRC);
+	
+	if (((rawCRC[0] < 48) || (rawCRC[0] > 57)) && ((rawCRC[0] < 65) || (rawCRC[0] > 70))) 
+	{
+		//Serial.printf("CRC Error 1\n");
+		return false;
+	}
+	
+	if (((rawCRC[1] < 48) || (rawCRC[1] > 57)) && ((rawCRC[1] < 65) || (rawCRC[1] > 70)))
+	{
+		//Serial.printf("CRC Error 2\n");
+		return false;
+	}
+	
+	
+	//Check CRC matches
+	int crc1 = 0;
+	int crc2 = 0;
+	
+	//Calculate expected checksum
+	for (int i = 1; i < len-3; i++) //Ignore the leading $ and last 3 bytes (*DD)
+	{
+        crc1 ^= str[i];
+    }
+	
+	//Convert actual checksum to int
+	crc2 = (int)strtol(rawCRC, NULL, 16);
+	
+	if (crc1 == crc2)
+	{
+		//Serial.printf("CRC Match!\n");
+		return true;
+	}
+
+	return false; 
+	 
 }
 
 
 
 void GPSHandler::parseNMEA(char c) //Assemble NMEA sentences from received data 
-{
-	if(c == '$') //Start of NMEA sentence
+{	
+	if (c =='$') //Start of new NMEA sentence
 	{
-		extractNMEA(NMEAParserBuffer, NMEAParserIndex); //Deal with the previous sentence
-		
-		/*
-		for (int n = 0; n < NMEAParserIndex; n++) 
-			{
-				Serial.write(NMEAParserBuffer[n]); 
-			}
-		*/
-		
-		memset(NMEAParserBuffer, '\0', sizeof(NMEAParserBuffer)); //Clear the buffer ready for a new sentence
-		NMEAParserIndex = 0; //Reset the index
+		if (validNMEASentence(NMEAParserBuffer))
+		{
+			//Serial.printf("VALID Len: %d, Sentence: %s\n", NMEAParserIndex, NMEAParserBuffer); 
+			extractNMEA(NMEAParserBuffer);
+		}
+		else
+		{
+			//Serial.printf("INVALID Len: %d, Sentence: %s\n", NMEAParserIndex, NMEAParserBuffer); 
+		}
+		memset(NMEAParserBuffer, '\0', sizeof(NMEAParserBuffer)); //Clear the buffer
+		NMEAParserIndex = 0; //Reset the buffer index
 	}
 	
-	NMEAParserBuffer[NMEAParserIndex] = c; //Append latest byte to buffer
+	if (NMEAParserIndex < sizeof(NMEAParserBuffer)) //Don't overrun the buffer (in case of malformed sentences)
+	{
+	NMEAParserBuffer[NMEAParserIndex] = c; //Append received byte to buffer
 	NMEAParserIndex++; //Increment buffer index
+	}
 }
 
-void GPSHandler::extractNMEA(char *str, int len) //Parse each NMEA sentence and separate the fields (Checksums are ignored)
+void GPSHandler::extractNMEA(char *str) //Parse each NMEA sentence and separate the fields 
 {
 	//Separate the NMEA sentence into individual fields
-	Serial.println("+++");
-	Serial.printf("%s", str);
-	Serial.println("---");
+	//Serial.print("+++");
+	//Serial.printf("%s", str);
+	//Serial.println("---");
 	char* token;
 	String NMEAParts[21];
 	int i;
@@ -272,7 +337,7 @@ void GPSHandler::extractNMEA(char *str, int len) //Parse each NMEA sentence and 
 		if ((NMEAParts[1] == "NULL") || (NMEAParts[1] == "") || (NMEAParts[2] == "NULL") || (NMEAParts[2] == "") || (NMEAParts[3] == "NULL") || (NMEAParts[3] == "") || (NMEAParts[4] == "NULL") || (NMEAParts[4] == ""))
 		{
 			//Invalid time
-			timeValid = 0;
+			timeValid = false;
 			return;
 		}
 		else
@@ -285,13 +350,12 @@ void GPSHandler::extractNMEA(char *str, int len) //Parse each NMEA sentence and 
 		month = NMEAParts[3];
 		year = NMEAParts[4];
 		
-		timeValid = 1;
+		timeValid = true;
 		}
 	}
 	else //Discard anything else
 	{
-		//Serial.println("A malformed NMEA sentence was discarded");
-		//return;
+		return;
 	}
 	
 }

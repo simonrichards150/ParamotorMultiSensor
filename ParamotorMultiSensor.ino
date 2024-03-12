@@ -17,11 +17,15 @@ void setup() {
 
 void loop() {
   GPS.tick(0);
-  //Serial.println(GPS.epochTime());
-  //GPS.printVars();
+  Serial.println(GPS.epochTime());
+  GPS.printVars();
+
+  //char val[256] = "$GNGGA,045712.800,5129.08142,N,00001.36838,W,1,13,1.2,10.5,M,45.6,M,,*68\n\n";
+  //GPS.validNMEASentence(val);
+
 tft.fillScreen(TFT_ORANGE);
-  delay(1000);
+  delay(10);
   tft.fillScreen(TFT_RED);
-  delay(1000);
+  delay(10);
 
 }
