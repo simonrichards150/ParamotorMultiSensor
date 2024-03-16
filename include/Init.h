@@ -50,9 +50,9 @@
 #define LED3	12	//Right LED
 
 //LED source pins - low=off, high=on
-#define LEDR	21	//Red
+#define LEDR	15	//Red
 #define LEDG	14	//Green
-#define LEDB	22	//Blue
+#define LEDB	16	//Blue
 
 //Battery management
 #define VBAT	4	//Battery voltage - 1:2 divider (multiply ADC reading by 1.5 to get true voltage)
@@ -86,7 +86,7 @@
 
 //Tachometer
 #define TACH_EN		42	//Power enable for external sensor - high=on, low=off
-#define TACH_PULSE	47	//Pulse input
+#define TACH_PULSE	41	//Pulse input
 
 #include <Arduino.h>
 #include <Wire.h>
