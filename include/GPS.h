@@ -33,7 +33,7 @@ private:
 	bool validNMEASentence(char*);
 	void extractNMEA(char*);
 	
-	char NMEAParserBuffer[256] = {'\0'};
+	char NMEAParserBuffer[512] = {'\0'};
 	int NMEAParserIndex = 0;
 	
 }; //End class definition
@@ -260,24 +260,40 @@ void GPSHandler::parseNMEA(char c) //Assemble NMEA sentences from received data
 void GPSHandler::extractNMEA(char *str) //Parse each NMEA sentence and separate the fields 
 {
 	//Separate the NMEA sentence into individual fields
-	//Serial.print("+++");
-	//Serial.printf("%s", str);
-	//Serial.println("---");
+	Serial.print("+++");
+	Serial.printf("%s", str);
+	Serial.println("---");
 	char* token;
-	String NMEAParts[21];
-	int i;
+	String NMEAParts[25];
 	int NMEAPartsCount = 0;
 	while((token = strsep(&str, ","))) 
 	{
 		if(*token == '\0') //If null value
 		{
-			NMEAParts[i] = "NULL";
+			if (NMEAPartsCount < 25)
+			{
+			NMEAParts[NMEAPartsCount] = "NULL";
+			}
+			else
+			{
+				Serial.println("INDEX OUT OF RANGE 1");
+				Serial.printf("Sentence: %s\n", str);
+				return;
+			}
 		}
 		else //If real value
 		{
-			NMEAParts[i] = String(token);
+			if (NMEAPartsCount < 25)
+			{
+			NMEAParts[NMEAPartsCount] = String(*token);
+			}
+			else
+			{
+				Serial.println("INDEX OUT OF RANGE 2");
+				Serial.printf("Sentence: %s", str);
+				return;
+			}
 		}
-		i++;
 		NMEAPartsCount++;
 	}
 	/*
@@ -320,7 +336,7 @@ void GPSHandler::extractNMEA(char *str) //Parse each NMEA sentence and separate 
 	{
 		spd = NMEAParts[7]; //Ground speed (KPH)
 		
-		if (spd.toInt() > 0.1) //If stationary, heading is likely to be wrong
+		if (spd.toInt() > 1) //If stationary, heading is likely to be wrong
 		{
 			hdg = NMEAParts[1]; //Course over Ground, relative to true north (Degrees)
 		}
@@ -345,7 +361,7 @@ void GPSHandler::extractNMEA(char *str) //Parse each NMEA sentence and separate 
 		hours = NMEAParts[1].substring(0, 2);
 		mins = NMEAParts[1].substring(2, 4);
 		secs = NMEAParts[1].substring(4, 6);
-		ms = NMEAParts[1].substring(7, 10); //ms will always be 000 unless an update rate greater than 1Hz is selected
+		ms = NMEAParts[1].substring(7, 10); //Multiples of Hz update rate
 		day = NMEAParts[2];
 		month = NMEAParts[3];
 		year = NMEAParts[4];

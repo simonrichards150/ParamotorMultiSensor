@@ -8,40 +8,61 @@
 #define USE_DMA_TO_TFT
 #define COLOR_DEPTH 16 //Required for DMA
 
-#include <TFT_eSPI.h>
 
-class DisplayHandler : public TFT_eSPI //Begin class definition
+#include <TFT_eSPI.h>
+#include "splashimg.h"
+
+class DisplayHandler //Begin class definition
 {
 public:
 
-	DisplayHandler(TFT_eSPI *tft);
+	DisplayHandler();
 	void begin();
 	void update();
+	void splash();
+	void loadMainView();
 	
 	
 private:
-	TFT_eSPI *_tft;
+	TFT_eSPI tft;
+	
+	
+	
 	
 }; //End class definition
 
 
 //Class methods
-DisplayHandler::DisplayHandler(TFT_eSPI *tft) //Constructor
+DisplayHandler::DisplayHandler() //Constructor
 {
 	//Can't really do anything here
-	_tft = tft;
+	
 }
 
 void DisplayHandler::begin()
 {
 	
-	_tft->init();
-	_tft->setRotation(3);
-	_tft->setTextColor(TFT_WHITE, TFT_BLACK, true);
+	tft.init();
+	tft.setRotation(3);
+	tft.setTextColor(TFT_WHITE, TFT_BLACK, true);
+	
+	//tft.fillScreen(TFT_ORANGE);
+  
 	
 }
 
 void DisplayHandler::update()
+{
+	
+}
+
+void DisplayHandler::splash()
+{
+	tft.setSwapBytes(true);
+	tft.pushImage(0, 0, SPLASHIMG_W, SPLASHIMG_H, splashimg);
+}
+
+void DisplayHandler::loadMainView()
 {
 	
 }
