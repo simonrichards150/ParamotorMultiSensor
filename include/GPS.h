@@ -19,6 +19,8 @@ public:
 	void printVars();
 	int epochTime();
 	
+	
+	
 	bool timeValid = false;
 	
 	//It's not nice to expose all the variables but it's easier than writing accessor methods for all of them
@@ -257,52 +259,52 @@ void GPSHandler::parseNMEA(char c) //Assemble NMEA sentences from received data
 	}
 }
 
-void GPSHandler::extractNMEA(char *str) //Parse each NMEA sentence and separate the fields 
+void GPSHandler::extractNMEA(char *str1) //Parse each NMEA sentence and separate the fields 
 {
 	//Separate the NMEA sentence into individual fields
-	Serial.print("+++");
-	Serial.printf("%s", str);
-	Serial.println("---");
+	
+	//Make a copy of the sentence because strsep will modify it
+	
+	char* str = strdupa(str1);
+	
+	//Serial.print("+++");
+	//Serial.printf("%s", str);
+	//Serial.println("---");
+	//Serial.flush();
+	
 	char* token;
-	String NMEAParts[25];
+	String NMEAParts[64]; //Shouldn't be longer than 64 elements...unless something went very wrong
 	int NMEAPartsCount = 0;
-	while((token = strsep(&str, ","))) 
+	
+	while((token = strsep(&str, ","))) //Split the sentence 
 	{
-		if(*token == '\0') //If null value
+		
+		if(token[0] == '\0') //If null value
 		{
-			if (NMEAPartsCount < 25)
+			if (NMEAPartsCount < 64) //Don't overrun the array
 			{
-			NMEAParts[NMEAPartsCount] = "NULL";
+				NMEAParts[NMEAPartsCount] = "NULL"; //Write string "NULL" to the array (Not actually null)
 			}
 			else
 			{
-				Serial.println("INDEX OUT OF RANGE 1");
-				Serial.printf("Sentence: %s\n", str);
-				return;
+				return; 
 			}
 		}
 		else //If real value
-		{
-			if (NMEAPartsCount < 25)
+		{			
+			if (NMEAPartsCount < 64) //Don't overrun the array
 			{
-			NMEAParts[NMEAPartsCount] = String(*token);
+				NMEAParts[NMEAPartsCount] = String(token); //Write the value from the sentence into the array
 			}
 			else
 			{
-				Serial.println("INDEX OUT OF RANGE 2");
-				Serial.printf("Sentence: %s", str);
 				return;
 			}
 		}
+		
 		NMEAPartsCount++;
 	}
-	/*
-	for (int n=0; n<NMEAPartsCount; n++)
-		{
-			Serial.printf("%2d: %s\n", n, NMEAParts[n]);
-		}
-	*/		
-			
+		
 	//Determine which type of NMEA sentence and update variables
 	if(NMEAParts[0] == "$GNGGA")
 	{
@@ -327,6 +329,8 @@ void GPSHandler::extractNMEA(char *str) //Parse each NMEA sentence and separate 
 		{
 			fix = "3D"; //3D Fix
 		}
+		
+		//NMEAParts[15] = '\0';
 		
 		pdop = NMEAParts[15]; //Position Dilution of Precision
 		hdop = NMEAParts[16]; //Horizontal Dilution of Precision
@@ -436,8 +440,8 @@ void GPSHandler::printVars() //Print all the GPS data
 	Serial.println(year);
 }
 
-//Get epoch time in time_t format - depending on when called, could be up to a second of error
-int GPSHandler::epochTime()
+
+int GPSHandler::epochTime() //Get epoch time in time_t format - not synchronised, could be slightly out of date when called
 {	
 	if (timeValid)
 	{
