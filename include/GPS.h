@@ -265,8 +265,7 @@ void GPSHandler::extractNMEA(char *str1) //Parse each NMEA sentence and separate
 	
 	/*Serial.print("+++");
 	Serial.printf("%s", str);
-	Serial.println("---");
-	Serial.flush();*/
+	Serial.println("---");*/
 	
 	char* token;
 	String NMEAParts[64]; //Shouldn't be longer than 64 elements...unless something went very wrong
