@@ -111,7 +111,7 @@ void pinSetup()
 	pinMode(GPS_TXO, INPUT);
 	pinMode(GPS_RXI, OUTPUT);
 	
-	pinMode(SD_CD, OUTPUT);
+	pinMode(SD_CD, INPUT);
 	pinMode(SD_CLK, OUTPUT);
 	pinMode(SD_CMD, OUTPUT);
 	pinMode(SD_D0, OUTPUT);
