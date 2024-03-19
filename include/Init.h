@@ -137,7 +137,7 @@ void commsSetup()
 {
 	Serial.setTxTimeoutMs(0); //Avoid delays if USB isn't connected
 	Serial.begin(115200); //Start serial to PC
-		
+	
 	Wire.setPins(TC_SDA, TC_SCL); //Set up I2C pins
 	Wire.begin(); //Start I2C
 }

@@ -1,10 +1,13 @@
 #include "include/Init.h"
 #include "include/GPS.h"
 #include "include/Display.h"
-
+#include "include/Temperature.h"
 
 DisplayHandler GUI = DisplayHandler();
 GPSHandler GPS = GPSHandler();
+TempHandler TEMP = TempHandler();
+
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -14,21 +17,28 @@ void setup() {
   commsSetup();
   GPS.begin();
   GPS.configure();
- delay(1000);
-  Serial.println("Press button");
-  while(!digitalRead(BTN1))
+
+  //TEMP.begin(); //Uncomment once temperature handler is done <-----------------
+  
+
+  /*Serial.println("Rebooted. Press button");
+  
+  while(!digitalRead(BTN1)) //In case of crash this will halt the program after reboot
   {
     ;
   }
+  digitalWrite(TACH_EN, HIGH);*/
 }
 
 void loop() {
   
-  GPS.tick(0);
-  //Serial.println(GPS.epochTime());
-  GPS.printVars();
-  Serial.printf("\nFree: %d\n", ESP.getFreeHeap());
-  Serial.printf("MaxAlloc: %d\n\n", ESP.getMaxAllocHeap());
+  GPS.tick(0); //Update GPS
+  GPS.printVars(); //Print GPS information
 
-  delay(500);
+  //Serial.println(TEMP.getCJT()); //Uncomment once temperature handler is done <----------------
+  //Serial.println(TEMP.getUnCompTemp());
+  //Serial.println(TEMP.getCompTemp());
+  
+  
+  delay(1000); //1 second delay
 }

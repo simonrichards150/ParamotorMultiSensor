@@ -1,0 +1,167 @@
+//Thermocouple Handler
+//Eden Agyemang
+
+#ifndef TEMPERATURE_H //Include guard (prevent including more than once)
+#define TEMPERATURE_H
+
+//Include third-party libraries 
+#include <TMP1075.h>
+#include <Adafruit_MCP3421.h>
+
+class TempHandler
+{
+public:
+	TempHandler(); 
+	void begin(); 
+	double getCJT();
+	double getCompTemp();
+	double getUnCompTemp();
+
+private:
+	Adafruit_MCP3421 adc; //ADC object
+	TMP1075::TMP1075 tmp1075 = TMP1075::TMP1075(Wire); //TMP1075 object
+	
+	void enableFan(); //Fan is connected to tachometer switch so will always be on when the tach is enabled, this function is just to allow us to turn it on earlier if we want to
+	double mVtoT(double);
+	double TtomV(double);
+	double thermocoupleConvert(double, double);
+
+};
+
+TempHandler::TempHandler() //Constructor
+{
+	//No need to do anything here
+}
+
+void TempHandler::begin() //Initialise and configure the ADC and TMP1075
+{
+	//There is no need to configure the Wire pins etc as this is already done with Init.h - make sure that Init.h is included in the main sketch and the pinSetup() and commsSetup() functions are called first in the Arduino setup() function.
+	
+	adc.begin(0x69, &Wire); //Start the adc I2C using the Wire object - ADC is address 0x69
+	delay(200); //Just in case
+	enableFan(); //Turn on the fan
+	
+	//Add code here to set the ADC gain, resolution, and mode
+	
+}
+
+void TempHandler::enableFan()
+{
+	//Add code here to turn on TACH_EN pin
+}
+
+double TempHandler::getCJT()
+{
+	//Add code here to return the temperature reading from the TMP1075
+}
+
+double TempHandler::getUnCompTemp()
+{
+	//Add code here to return the raw temperature reading from the thermocouple (ADC reading -> convert mV to temperature)
+}
+
+double TempHandler::getCompTemp()
+{
+	//Add code here to return the compensated temperature reading
+}
+
+//-------End main class functions - don't edit below this line--------
+
+//Thermocouple conversion calculations
+//Simon Richards-Martin
+//http://www.mosaic-industries.com/embedded-systems/microcontroller-projects/temperature-measurement/thermocouple/calibration-table
+
+//Valid for -100C to 800C
+double TempHandler::mVtoT(double mV) //Convert mV to celsius
+{
+	double T0, v0, p1, p2, p3, p4, q1, q2, q3, vDiff, TDiff, result = 0;
+	
+	//Split by range (different coefficients)
+	if ((mV < 4.096) && (mV >= -3.554)) //-100C to 100C
+	{
+		T0 = -8.7935962;
+		v0 = -0.34489914;
+		p1 = 25.678719;
+		p2 = -0.49887904;
+		p3 = -0.44705222;
+		p4 = -0.044869203;
+		q1 = 0.00023893439;
+		q2 = -0.020397750;
+		q3 = -0.0018424107;
+	}
+	else if ((mV < 16.397) && (mV >= 4.096)) //100C to 400C
+	{
+		T0 = 310.18976;
+		v0 = 12.631386;
+		p1 = 24.061949;
+		p2 = 4.0158622;
+		p3 = 0.26853917;
+		p4 = -0.0097188544;
+		q1 = 0.16995872;
+		q2 = 0.011413069;
+		q3 = -0.00039275155;
+	}
+	else if ((mV < 33.275) && (mV >= 16.397)) //400C to 800C
+	{
+		T0 = 605.72562;
+		v0 = 25.148718;
+		p1 = 23.539401;
+		p2 = 0.046547228;
+		p3 = 0.013444400;
+		p4 = 0.00059236853;
+		q1 = 0.00083445513;
+		q2 = 0.00046121445;
+		q3 = 0.000025488122;
+	}
+	else //Out of range
+	{
+		return -9999; //Error
+	}
+	
+	vDiff = mV - v0;
+	
+	result = T0+((vDiff*(p1+vDiff*(p2+vDiff*(p3+p4*vDiff))))/(1+vDiff*(q1+vDiff*(q2+q3*vDiff))));
+	
+	return result;
+}
+
+//Valid for -20C to +70C
+double TempHandler::TtomV(double T) //Convert celsius to mV
+{
+	double T0, v0, p1, p2, p3, p4, q1, q2, q3, vDiff, TDiff, result = 0;
+	
+	if ((T <= 70) && (T >= -20)) 
+	{
+		T0 = 25;
+		v0 = 1.0003453;
+		p1 = 0.040514854;
+		p2 = -0.000038789638;
+		p3 = -0.0000028608478;
+		p4 = -0.00000000095367041;
+		q1 = -0.0013948675;
+		q2 = -0.000067976627;
+	}
+	else //Out of range
+	{
+		return -9999; //Error
+	}
+	
+	TDiff = T - T0;
+	
+	result = v0+((TDiff*(p1+TDiff*(p2+TDiff*(p3+p4*TDiff))))/(1+vDiff*(q1+q2*TDiff)));
+	
+	return result;
+	
+}
+
+double TempHandler::thermocoupleConvert(double coldT, double hotmV) //Apply compensation and return temperature
+{
+	double result = 0;
+	
+	result = mVtoT(TtomV(coldT)+hotmV);
+	
+	return result;
+}
+
+
+#endif
