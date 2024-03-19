@@ -19,15 +19,10 @@ public:
 	void printVars();
 	int epochTime();
 	
-	
-	
 	bool timeValid = false;
 	
 	//It's not nice to expose all the variables but it's easier than writing accessor methods for all of them
 	String fix, lat, lon, latNS, lonEW, alt, sats, pdop, hdop, vdop, hdg, spd, mins, secs, ms, hours, day, month, year = "";
-	
-	
-	
 	
 private:
 	void GPSWrite(char*);
@@ -267,10 +262,11 @@ void GPSHandler::extractNMEA(char *str1) //Parse each NMEA sentence and separate
 	
 	char* str = strdupa(str1);
 	
-	//Serial.print("+++");
-	//Serial.printf("%s", str);
-	//Serial.println("---");
-	//Serial.flush();
+	
+	/*Serial.print("+++");
+	Serial.printf("%s", str);
+	Serial.println("---");
+	Serial.flush();*/
 	
 	char* token;
 	String NMEAParts[64]; //Shouldn't be longer than 64 elements...unless something went very wrong
@@ -308,76 +304,191 @@ void GPSHandler::extractNMEA(char *str1) //Parse each NMEA sentence and separate
 	//Determine which type of NMEA sentence and update variables
 	if(NMEAParts[0] == "$GNGGA")
 	{
-		lat = NMEAParts[2]; 	//Latitude (Degrees and Minutes)
-		latNS = NMEAParts[3];	//Latitude Direction (North or South)
-		lon = NMEAParts[4];		//Longitude (Degrees and Minutes)
-		lonEW = NMEAParts[5];	//Longitude Direction (East or West)
-		sats = NMEAParts[7];	//No. of Satellites in Use
-		alt = NMEAParts[9];		//Altitude (M above MSL)
+		//Reassemble the sentence and check it is still valid
+		int sentenceLength = 15; //Number of elements expected
+		String sentence = "";
+		for (int i = 0; i < sentenceLength; i++)
+		{
+			if (!(NMEAParts[i] == "NULL"))
+			{
+				sentence += NMEAParts[i];
+			}
+			if (i < sentenceLength-1)
+			{
+				sentence += ",";
+			}
+			else
+			{
+				sentence += "\n\n"; //Add two end characters as the validation function expects it from the original sentence
+			}
+		}
+		
+		//Convert to char array for checksum function
+		char reassembled[256] = {'\0'};
+		sentence.toCharArray(reassembled, sentence.length()+3);
+		
+		if (validNMEASentence(reassembled))
+		{
+			lat = NMEAParts[2]; 	//Latitude (Degrees and Minutes)
+			latNS = NMEAParts[3];	//Latitude Direction (North or South)
+			lon = NMEAParts[4];		//Longitude (Degrees and Minutes)
+			lonEW = NMEAParts[5];	//Longitude Direction (East or West)
+			sats = NMEAParts[7];	//No. of Satellites in Use
+			alt = NMEAParts[9];		//Altitude (M above MSL)
+		}
+		else
+		{
+			return;
+		}
 	}
 	else if (NMEAParts[0] == "$GNGSA")
 	{
-		if(NMEAParts[2] == "1") //Fix type
+		//Reassemble the sentence and check it is still valid
+		int sentenceLength = 19; //Number of elements expected
+		String sentence = "";
+		for (int i = 0; i < sentenceLength; i++)
 		{
-			fix = "NOFIX"; //No fix
-		}
-		else if(NMEAParts[2] == "2")
-		{
-			fix = "2D"; //2D Fix
-		}
-		else if(NMEAParts[2] == "3")
-		{
-			fix = "3D"; //3D Fix
+			if (!(NMEAParts[i] == "NULL"))
+			{
+				sentence += NMEAParts[i];
+			}
+			if (i < sentenceLength-1)
+			{
+				sentence += ",";
+			}
+			else
+			{
+				sentence += "\n\n"; //Add two end characters as the validation function expects it from the original sentence
+			}
 		}
 		
-		//NMEAParts[15] = '\0';
+		//Convert to char array for checksum function
+		char reassembled[256] = {'\0'};
+		sentence.toCharArray(reassembled, sentence.length()+3);
 		
-		pdop = NMEAParts[15]; //Position Dilution of Precision
-		hdop = NMEAParts[16]; //Horizontal Dilution of Precision
-		vdop = NMEAParts[17]; //Vertical Dilution of Precision
+		if (validNMEASentence(reassembled))
+		{
+			if(NMEAParts[2] == "1") //Fix type
+			{
+				fix = "NOFIX"; //No fix
+			}
+			else if(NMEAParts[2] == "2")
+			{
+				fix = "2D"; //2D Fix
+			}
+			else if(NMEAParts[2] == "3")
+			{
+				fix = "3D"; //3D Fix
+			}
+			
+			pdop = NMEAParts[15]; //Position Dilution of Precision
+			hdop = NMEAParts[16]; //Horizontal Dilution of Precision
+			vdop = NMEAParts[17]; //Vertical Dilution of Precision
+		}
+		else
+		{
+			return;
+		}
 	}
 	else if (NMEAParts[0] == "$GNVTG")
 	{
-		spd = NMEAParts[7]; //Ground speed (KPH)
-		
-		if (spd.toInt() > 1) //If stationary, heading is likely to be wrong
+		//Reassemble the sentence and check it is still valid
+		int sentenceLength = 10; //Number of elements expected
+		String sentence = "";
+		for (int i = 0; i < sentenceLength; i++)
 		{
-			hdg = NMEAParts[1]; //Course over Ground, relative to true north (Degrees)
+			if (!(NMEAParts[i] == "NULL"))
+			{
+				sentence += NMEAParts[i];
+			}
+			if (i < sentenceLength-1)
+			{
+				sentence += ",";
+			}
+			else
+			{
+				sentence += "\n\n"; //Add two end characters as the validation function expects it from the original sentence
+			}
+		}
+		
+		//Convert to char array for checksum function
+		char reassembled[256] = {'\0'};
+		sentence.toCharArray(reassembled, sentence.length()+3);
+		
+		if (validNMEASentence(reassembled))
+		{
+			spd = NMEAParts[7]; //Ground speed (KPH)
+		
+			if (spd.toInt() > 1) //If stationary, heading is likely to be wrong
+			{
+				hdg = NMEAParts[1]; //Course over Ground, relative to true north (Degrees)
+			}
+			else
+			{
+				hdg = "INVALID"; //Warn of incorrect heading
+			}
 		}
 		else
 		{
-			hdg = "INVALID"; //Warn of incorrect heading
+			return;
 		}
-		
 	}
 	else if (NMEAParts[0] == "$GNZDA")
 	{
-		
-		//Check if there is a time provided
-		if ((NMEAParts[1] == "NULL") || (NMEAParts[1] == "") || (NMEAParts[2] == "NULL") || (NMEAParts[2] == "") || (NMEAParts[3] == "NULL") || (NMEAParts[3] == "") || (NMEAParts[4] == "NULL") || (NMEAParts[4] == ""))
+		//Reassemble the sentence and check it is still valid
+		int sentenceLength = 7; //Number of elements expected
+		String sentence = "";
+		for (int i = 0; i < sentenceLength; i++)
 		{
-			//Invalid time
-			timeValid = false;
-			return;
+			if (!(NMEAParts[i] == "NULL"))
+			{
+				sentence += NMEAParts[i];
+			}
+			if (i < sentenceLength-1)
+			{
+				sentence += ",";
+			}
+			else
+			{
+				sentence += "\n\n"; //Add two end characters as the validation function expects it from the original sentence
+			}
+		}
+		
+		//Convert to char array for checksum function
+		char reassembled[256] = {'\0'};
+		sentence.toCharArray(reassembled, sentence.length()+3);
+		
+		if (validNMEASentence(reassembled))
+		{
+			//Check if there is a time provided
+			if ((NMEAParts[1] == "NULL") || (NMEAParts[1] == "") || (NMEAParts[2] == "NULL") || (NMEAParts[2] == "") || (NMEAParts[3] == "NULL") || (NMEAParts[3] == "") || (NMEAParts[4] == "NULL") || (NMEAParts[4] == ""))
+			{
+				//Invalid time
+				timeValid = false;
+				return;
+			}
+			else
+			{		
+				hours = NMEAParts[1].substring(0, 2);
+				mins = NMEAParts[1].substring(2, 4);
+				secs = NMEAParts[1].substring(4, 6);
+				ms = NMEAParts[1].substring(7, 10); //Multiples of Hz update rate
+				day = NMEAParts[2];
+				month = NMEAParts[3];
+				year = NMEAParts[4];
+				
+				timeValid = true;
+			}
 		}
 		else
-		{		
-		hours = NMEAParts[1].substring(0, 2);
-		mins = NMEAParts[1].substring(2, 4);
-		secs = NMEAParts[1].substring(4, 6);
-		ms = NMEAParts[1].substring(7, 10); //Multiples of Hz update rate
-		day = NMEAParts[2];
-		month = NMEAParts[3];
-		year = NMEAParts[4];
-		
-		timeValid = true;
+		{
+			return;
 		}
 	}
 	else //Discard anything else
 	{
 		return;
 	}
-	
 }
 
 void GPSHandler::printVars() //Print all the GPS data
