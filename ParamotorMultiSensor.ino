@@ -2,19 +2,20 @@
 #include "include/GPS.h"
 #include "include/Display.h"
 #include "include/Temperature.h"
+#include "include/Tach.h"
 
 DisplayHandler GUI = DisplayHandler();
 GPSHandler GPS = GPSHandler();
 TempHandler TEMP = TempHandler();
-
+TachHandler TACH = TachHandler();
 
 
 void setup() {
-  // put your setup code here, to run once:
   pinSetup();
   GUI.begin();
   GUI.splash();
   commsSetup();
+  TACH.begin();
   GPS.begin();
   GPS.configure();
 
@@ -33,12 +34,12 @@ void setup() {
 void loop() {
   
   GPS.tick(0); //Update GPS
-  GPS.printVars(); //Print GPS information
+  //GPS.printVars(); //Print GPS information
 
   //Serial.println(TEMP.getCJT()); //Uncomment once temperature handler is done <----------------
   //Serial.println(TEMP.getUnCompTemp());
   //Serial.println(TEMP.getCompTemp());
+  Serial.println(TACH.getRPM());
   
-  
-  delay(1000); //1 second delay
+  delay(100); //1 second delay
 }

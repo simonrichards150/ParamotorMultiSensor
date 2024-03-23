@@ -4,6 +4,8 @@
 #ifndef TEMPERATURE_H //Include guard (prevent including more than once)
 #define TEMPERATURE_H
 
+#include <Arduino.h>
+
 //Include third-party libraries 
 #include <TMP1075.h>
 #include <Adafruit_MCP3421.h>
