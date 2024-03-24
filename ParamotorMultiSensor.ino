@@ -9,6 +9,8 @@ GPSHandler GPS = GPSHandler();
 TempHandler TEMP = TempHandler();
 TachHandler TACH = TachHandler();
 
+int bat = 4200;
+int dir = 0;
 
 void setup() {
   pinSetup();
@@ -18,7 +20,7 @@ void setup() {
   TACH.begin();
   GPS.begin();
   GPS.configure();
-
+  GUI.loadMainView();
   //TEMP.begin(); //Uncomment once temperature handler is done <-----------------
   
 
@@ -39,7 +41,23 @@ void loop() {
   //Serial.println(TEMP.getCJT()); //Uncomment once temperature handler is done <----------------
   //Serial.println(TEMP.getUnCompTemp());
   //Serial.println(TEMP.getCompTemp());
-  Serial.println(TACH.getRPM());
+  //Serial.println(TACH.getRPM());
+
+  GUI.update(0,0,0,"Hi", bat, false, "Hola"); //Fake values, only bat is actually used for anything
+
+  if (dir == 0)
+    bat--;
+
+  if (dir == 1)
+    bat++;
+
+  if (bat < 3100)
+    dir = 1;
+
+  if (bat > 4200)
+    dir = 0;
   
-  delay(100); //1 second delay
+
+  
+  delay(3); 
 }
