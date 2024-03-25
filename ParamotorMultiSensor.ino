@@ -9,7 +9,7 @@ GPSHandler GPS = GPSHandler();
 TempHandler TEMP = TempHandler();
 TachHandler TACH = TachHandler();
 
-int bat = 4200;
+int bat = 12000;
 int dir = 0;
 
 void setup() {
@@ -43,21 +43,21 @@ void loop() {
   //Serial.println(TEMP.getCompTemp());
   //Serial.println(TACH.getRPM());
 
-  GUI.update(0,0,0,"Hi", bat, false, "Hola"); //Fake values, only bat is actually used for anything
+  GUI.update(0,0,0,"Hi", 0, bat, false, "Hola"); //Fake values, only bat is actually used for anything
 
   if (dir == 0)
-    bat--;
+    bat-=10;
 
   if (dir == 1)
-    bat++;
+    bat+=10;
 
-  if (bat < 3100)
+  if (bat < 500)
     dir = 1;
 
-  if (bat > 4200)
+  if (bat > 10000)
     dir = 0;
   
 
   
-  delay(3); 
+  //delay(1); 
 }
