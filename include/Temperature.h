@@ -1,7 +1,7 @@
 //Thermocouple Handler
 //Eden Agyemang
 
-#ifndef TEMPERATURE_H //Include guard (prevent including more than once)
+#ifndef TEMPERATURE_H 
 #define TEMPERATURE_H
 
 #include <Arduino.h>
@@ -43,28 +43,37 @@ void TempHandler::begin() //Initialise and configure the ADC and TMP1075
 	delay(200); //Just in case
 	enableFan(); //Turn on the fan
 	
-	//Add code here to set the ADC gain, resolution, and mode
+	adc.setGain(GAIN_8X);
+	adc.setResolution(RESOLUTION_18_BIT);
+	adc.setMode(MODE_CONTINUOUS);
+	
+	tmp1075.begin(); // Initialize TMP1075 sensor
+	
 	
 }
 
 void TempHandler::enableFan()
 {
-	//Add code here to turn on TACH_EN pin
+	digitalWrite(TACH_EN, HIGH); // Turn the fan on by setting the TACH_EN pin HIGH
 }
 
 double TempHandler::getCJT()
 {
-	//Add code here to return the temperature reading from the TMP1075
+	return tmp1075.getTemperatureCelsius();
 }
 
 double TempHandler::getUnCompTemp()
 {
-	//Add code here to return the raw temperature reading from the thermocouple (ADC reading -> convert mV to temperature)
+	int16_t adcValue = adc.readADC();
+	double millivolts = (double)adcValue * 2048.0 / 131072.0 / 8.0;
+	return mVtoT(millivolts);
 }
 
 double TempHandler::getCompTemp()
 {
-	//Add code here to return the compensated temperature reading
+	int16_t adcValue = adc.readADC();
+	double millivolts = (double)adcValue * 2048.0 / 131072.0 / 8.0;
+	return thermocoupleConvert(tmp1075.getTemperatureCelsius(), millivolts);
 }
 
 //-------End main class functions - don't edit below this line--------

@@ -17,6 +17,10 @@
 #define DISPLAY_HEIGHT 170
 #define DISPLAY_WIDTH 320
 
+#define BUTTON1_Y 24
+#define BUTTON2_Y 70
+#define BUTTON3_Y 114
+
 #define STATUSBAR_HEIGHT 24
 #define STATUSBAR_OFFSET DISPLAY_HEIGHT-STATUSBAR_HEIGHT //146
 #define STATUSBAR_BG 0x0801 //0x1004 //0x0841
@@ -26,8 +30,8 @@
 #define GAUGE_ARC_THICKNESS 6
 #define GAUGE_YPOS 20
 
-#define TEMPERATURE_MIN 500
-#define TEMPERATURE_MAX 700
+#define TEMPERATURE_MIN 0 //500
+#define TEMPERATURE_MAX 50 //700
 #define TEMPERATURE_BG TFT_BLACK
 #define TEMPERATURE_FG 0xfba0 //TFT_ORANGE
 
@@ -42,7 +46,7 @@ public:
 
 	DisplayHandler();
 	void begin();
-	void update(double, int, double, String, int, int, bool, String);
+	void update(double, int, double, String, int, int, bool, String, bool);
 	void splash();
 	void loadMainView();
 	void setBacklight(int);
@@ -55,6 +59,8 @@ private:
 	void drawBatteryIndicator(int, bool);
 	void drawTemperatureGauge(double);
 	void drawRPMGauge(int);
+	
+	bool loggingstate = false;
 	
 }; //End class definition
 
@@ -78,14 +84,36 @@ void DisplayHandler::begin()
 	
 }
 
-void DisplayHandler::update(double temp, int rpm, double hdg, String fix, int sats, int batt, bool chrg, String status)
+void DisplayHandler::update(double temp, int rpm, double hdg, String fix, int sats, int batt, bool chrg, String status, bool logging)
 {
+	//Update the log button text
+	if (logging != loggingstate) //Only update if there's a change
+	{
+		
+		if (logging)
+		{
+			tft.setTextColor(TFT_BLACK);
+			tft.drawString("Start Log >", DISPLAY_WIDTH-2, BUTTON1_Y);
+			tft.setTextColor(TFT_WHITE);
+			tft.drawString("Stop Log >", DISPLAY_WIDTH-2, BUTTON1_Y);
+			loggingstate = true;
+		}
+		else
+		{
+			tft.setTextColor(TFT_BLACK);
+			tft.drawString("Stop Log >", DISPLAY_WIDTH-2, BUTTON1_Y);
+			tft.setTextColor(TFT_WHITE);
+			tft.drawString("Start Log >", DISPLAY_WIDTH-2, BUTTON1_Y);
+			loggingstate = false;
+		}
+	}
+	
 	//Update the gauges
 	//Temperature
-	drawTemperatureGauge(batt);
+	drawTemperatureGauge(temp);
 	
 	//RPM
-	drawRPMGauge(batt);
+	drawRPMGauge(rpm);
 	
 	//Update the printed values
 	
@@ -107,11 +135,22 @@ void DisplayHandler::splash()
 
 void DisplayHandler::loadMainView()
 {
-	//Basically just load the background, then call update
+	//Basically just load the static elements, then call update
 	tft.fillScreen(TFT_BLACK);
 	tft.setCursor(0, 0);
 	
 	tft.fillRoundRect(0,STATUSBAR_OFFSET,DISPLAY_WIDTH,STATUSBAR_HEIGHT,0,STATUSBAR_BG);
+	
+	//Draw button text
+	tft.setTextDatum(5); //Middle right
+	//img.unloadFont();
+	tft.setTextColor(TFT_WHITE);
+	tft.setTextFont(2);
+	tft.drawString("Power Off >", DISPLAY_WIDTH-2, BUTTON3_Y);
+	tft.drawString("Backlight >", DISPLAY_WIDTH-2, BUTTON2_Y);
+
+	tft.drawString("Start Log >", DISPLAY_WIDTH-2, BUTTON1_Y); //Won't be logging when this is drawn
+	
 	
 	drawBatteryIndicator(3100, false);
 	drawTemperatureGauge(3);
@@ -241,7 +280,8 @@ void DisplayHandler::drawTemperatureGauge(double tempC)
 	img.setTextDatum(4);
 	//img.setFreeFont(&FreeSansBold9pt7b);
 	img.loadFont(NotoSansMonoSCB20);
-	img.drawNumber((int)tempC, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+15);
+	//img.drawNumber((int)tempC, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+15);
+	img.drawFloat((float)tempC, 1, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+15);
 	img.drawString("C", (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+5, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+35);
 	img.unloadFont();
 	img.loadFont(NotoSansBold15);

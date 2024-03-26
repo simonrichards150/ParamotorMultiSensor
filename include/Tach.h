@@ -8,6 +8,9 @@
 #include <soc/mcpwm_struct.h>
 #include <driver/mcpwm.h>
 
+#define TACH_RPM_MAX 50000
+#define TACH_RPM_MIN 300
+
 class TachHandler
 {
 public:
@@ -61,14 +64,20 @@ void TachHandler::begin()
 
 int TachHandler::getRPM()
 {
-	//Serial.println(counts); //Raw counts
-	//Serial.println(1000000/((counts*125)/10000)); //Frequency (Hz)
-	//Serial.println((1000000/((counts*125)/10000))*60); //RPM
+	//Serial.println(TachHandler_counts); //Raw counts
+	//Serial.println(1000000/((TachHandler_counts*125)/10000)); //Frequency (Hz)
+	//Serial.println((1000000/((TachHandler_counts*125)/10000))*60); //RPM
 	
-	if(TachHandler_counts > 11500000) //Return 0 if less than 420 RPM
+	int rpm = (int)round(((1000000/((TachHandler_counts*125)/10000))*60)); //Calculate RPM
+	
+	
+	if(rpm > TACH_RPM_MAX) 
+		return -1;
+	
+	if(rpm < TACH_RPM_MIN) 
 		return 0;
 	
-	return (int)round(((1000000/((TachHandler_counts*125)/10000))*60)); //Return RPM
+	return rpm; //Return RPM
 	
 }
 
