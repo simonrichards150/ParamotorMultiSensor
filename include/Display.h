@@ -4,6 +4,7 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 #include <Arduino.h>
+#include <time.h>
 
 #include <TFT_eSPI.h>
 #define USE_DMA_TO_TFT
@@ -11,8 +12,8 @@
 
 #include "NotoSansMonoSCB20.h"
 #include "NotoSansBold15.h"
-#include "NotoSansBold36.h"
-#include "splashimg.h"
+//#include "NotoSansBold36.h"
+//#include "splashimg.h"
 
 #define DISPLAY_HEIGHT 170
 #define DISPLAY_WIDTH 320
@@ -46,7 +47,7 @@ public:
 
 	DisplayHandler();
 	void begin();
-	void update(double, int, double, String, int, int, bool, String, bool);
+	void update(double, int, String, int, int, int, int, bool, bool);
 	void splash();
 	void loadMainView();
 	void setBacklight(int);
@@ -59,6 +60,7 @@ private:
 	void drawBatteryIndicator(int, bool);
 	void drawTemperatureGauge(double);
 	void drawRPMGauge(int);
+	void drawStatusBar(String, int, int, int, bool);
 	
 	bool loggingstate = false;
 	
@@ -84,7 +86,7 @@ void DisplayHandler::begin()
 	
 }
 
-void DisplayHandler::update(double temp, int rpm, double hdg, String fix, int sats, int batt, bool chrg, String status, bool logging)
+void DisplayHandler::update(double temp, int rpm, String fix, int sats, int time, int hdg, int batt, bool chrg, bool logging)
 {
 	//Update the log button text
 	if (logging != loggingstate) //Only update if there's a change
@@ -115,22 +117,20 @@ void DisplayHandler::update(double temp, int rpm, double hdg, String fix, int sa
 	//RPM
 	drawRPMGauge(rpm);
 	
-	//Update the printed values
-	
-	//Update the GPS status
-	
 	//Update the battery status indicator
 	drawBatteryIndicator(batt, chrg);
 	
-	//Update the heading indicator
-	
 	//Update the status bar
+	drawStatusBar(fix, sats, time, hdg, logging);
 }
 
 void DisplayHandler::splash()
 {
-	tft.setSwapBytes(true);
-	tft.pushImage(0, 0, SPLASHIMG_W, SPLASHIMG_H, splashimg); //Write the splash image to the display buffer
+	//tft.setSwapBytes(true);
+	//tft.pushImage(0, 0, SPLASHIMG_W, SPLASHIMG_H, splashimg); //Write the splash image to the display buffer
+	//tft.setTextDatum(3);
+	//tft.loadFont(NotoSansMonoSCB20);
+	//tft.drawString("Paramotor", 10, DISPLAY_HEIGHT/2);
 }
 
 void DisplayHandler::loadMainView()
@@ -152,10 +152,91 @@ void DisplayHandler::loadMainView()
 	tft.drawString("Start Log >", DISPLAY_WIDTH-2, BUTTON1_Y); //Won't be logging when this is drawn
 	
 	
-	drawBatteryIndicator(3100, false);
-	drawTemperatureGauge(3);
-	drawRPMGauge(3);
+	drawBatteryIndicator(4200, false);
+	drawTemperatureGauge(1);
+	drawRPMGauge(1);
 	
+	
+}
+
+void DisplayHandler::drawStatusBar(String fix, int sats, int time, int hdg, bool logging)
+{
+	img.createSprite(280,STATUSBAR_HEIGHT); //Status bar 280px wide excluding battery indicator
+	img.fillSprite(STATUSBAR_BG);
+	img.unloadFont();
+	img.loadFont(NotoSansMonoSCB20);
+	img.setTextColor(TFT_WHITE);
+	img.setTextDatum(3);
+	
+	//Time start
+	if (time > 0)
+	{
+		//Convert epoch time to time_t
+		time_t currentTime = time;
+		int hours = gmtime(&currentTime)->tm_hour;
+		int mins = gmtime(&currentTime)->tm_min;
+		int secs = gmtime(&currentTime)->tm_sec;
+		//Prepare string containing time
+		char timeNow[6]; 
+		sprintf(timeNow, "%02d:%02d", hours, mins);
+		img.drawString(timeNow, 6, STATUSBAR_HEIGHT/2);
+	}
+	else
+	{
+		img.drawString("--:--", 2, STATUSBAR_HEIGHT/2);
+	}
+	//Time end
+	
+	//Log status begin
+	if (logging)
+	{
+		img.drawString("LOGGING", 70, STATUSBAR_HEIGHT/2);
+	}
+	else
+	{
+		img.drawString("IDLE", 70, STATUSBAR_HEIGHT/2);
+	}
+	//Log status end
+	
+	//GPS status begin
+	//Fix and satellites
+	if (fix == "NOFIX")
+	{
+		img.setTextColor(TFT_RED);
+		img.drawString("NOFIX", 160, STATUSBAR_HEIGHT/2);
+		img.setTextColor(TFT_WHITE);
+	}
+	else
+	{
+		char fixNow[7]; 
+		sprintf(fixNow, "%s(%02d)", fix, sats);
+		img.setTextColor(TFT_GREEN);
+		img.drawString(fixNow, 160, STATUSBAR_HEIGHT/2);
+		img.setTextColor(TFT_WHITE);
+	}
+	
+	//Heading
+	if (hdg < 1)
+	{
+		img.drawString("---", 236, STATUSBAR_HEIGHT/2);
+	}
+	else
+	{
+		char hdgNow[4]; 
+		sprintf(hdgNow, "%03d", (int)round(hdg));
+		img.drawString(hdgNow, 236, STATUSBAR_HEIGHT/2);
+	}
+	img.unloadFont();
+	img.loadFont(NotoSansBold15);
+	img.drawString("o", 270, (STATUSBAR_HEIGHT/2)-6); //Degree symbol
+	
+	//GPS status end
+	
+	
+	
+	//Push to display
+	img.pushSprite(0, STATUSBAR_OFFSET+2, TFT_TRANSPARENT);
+	img.deleteSprite();
 	
 }
 
@@ -163,7 +244,7 @@ void DisplayHandler::drawBatteryIndicator(int batt, bool chg)
 {
 	int pc = 0;
 	
-	if (batt >= 4200) //Full battery
+	if (batt >= 4100) //Full battery
 	{
 		pc = 100;
 	}
@@ -176,41 +257,49 @@ void DisplayHandler::drawBatteryIndicator(int batt, bool chg)
 		pc = ((batt-3100)/1100.0)*100; //Calculate battery percentage
 	}
 	
-	//Draw battery indicator outline (white)
+	//Draw battery indicator
 	img.createSprite(32,STATUSBAR_HEIGHT-8);
 	img.fillSprite(TFT_TRANSPARENT);
-	if (chg)
-	{
-		img.drawRoundRect(0,0,28,STATUSBAR_HEIGHT-8,1,TFT_GREEN);
-		img.fillRoundRect(27,((STATUSBAR_HEIGHT-8)/2)-3,3,6,1,TFT_GREEN);
-	}
-	else
-	{
-		img.drawRoundRect(0,0,28,STATUSBAR_HEIGHT-8,1,TFT_WHITE);
-		img.fillRoundRect(27,((STATUSBAR_HEIGHT-8)/2)-3,3,6,1,TFT_WHITE);
-	}
 	
-	//Fill the variable part of the indicator with background colour
-	img.fillRoundRect(2,2,24,STATUSBAR_HEIGHT-12,0,TFT_BLACK);
+	img.drawRoundRect(0,0,28,STATUSBAR_HEIGHT-8,1,TFT_WHITE);
+	img.fillRoundRect(27,((STATUSBAR_HEIGHT-8)/2)-3,3,6,1,TFT_WHITE);
 	
-	//Draw battery percentage indicator (colour according to percentage)
-	if (pc >= 60) //Above 60% in green
+	if (chg) //Charging (battery reading is wrong when charging)
 	{
-		img.fillRoundRect(2,2,(24.0/100.0)*pc,STATUSBAR_HEIGHT-12,0,TFT_GREEN);
+		img.fillRoundRect(2,2,24,STATUSBAR_HEIGHT-12,0,TFT_BLACK);
+		img.setTextDatum(4);
+		img.setTextColor(TFT_WHITE);
+		img.unloadFont();
+		img.setTextFont(2);
+		img.drawString("CHG", (img.width()/2)-1, img.height()/2);
 	}
-	else if (pc >= 20) //Above 20% in orange
+	else //Not charging
 	{
-		img.fillRoundRect(2,2,(24.0/100.0)*pc,STATUSBAR_HEIGHT-12,0,TFT_ORANGE);
-	}
-	else if (pc < 20) //<20% in red
-	{
-		if (pc < 5)
-		{
-			pc = 5; //Keep a tiny bit of red even when the percentage should show nothing
-		}
 		
-		img.fillRoundRect(2,2,(24.0/100.0)*pc,STATUSBAR_HEIGHT-12,0,TFT_RED);
+		//Fill the variable part of the indicator with background colour
+		img.fillRoundRect(2,2,24,STATUSBAR_HEIGHT-12,0,TFT_BLACK);
+		
+		//Draw battery percentage indicator (colour according to percentage)
+		if (pc >= 60) //Above 60% in green
+		{
+			img.fillRoundRect(2,2,(24.0/100.0)*pc,STATUSBAR_HEIGHT-12,0,TFT_GREEN);
+		}
+		else if (pc >= 20) //Above 20% in orange
+		{
+			img.fillRoundRect(2,2,(24.0/100.0)*pc,STATUSBAR_HEIGHT-12,0,TFT_ORANGE);
+		}
+		else if (pc < 20) //<20% in red
+		{
+			if (pc < 5)
+			{
+				pc = 5; //Keep a tiny bit of red even when the percentage should show nothing
+			}
+			
+			img.fillRoundRect(2,2,(24.0/100.0)*pc,STATUSBAR_HEIGHT-12,0,TFT_RED);
+		}
 	}
+	
+	
 	
 	//Push to display
 	img.pushSprite(286, STATUSBAR_OFFSET + ((STATUSBAR_HEIGHT-img.height())/2), TFT_TRANSPARENT);
@@ -242,6 +331,7 @@ void DisplayHandler::drawTemperatureGauge(double tempC)
 	//Prepare sprite
 	img.createSprite(GAUGE_DIAMETER+(GAUGE_PADDING*2), GAUGE_DIAMETER+(GAUGE_PADDING*2)+26);
 	img.fillSprite(TFT_BLACK);
+	img.setTextColor(TFT_WHITE);
 	
 	img.drawSmoothArc((GAUGE_DIAMETER+(GAUGE_PADDING*2))/2,(GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+20,(GAUGE_DIAMETER/2)+4,(GAUGE_DIAMETER/2)-GAUGE_ARC_THICKNESS-4,40,320,TFT_WHITE,TFT_TRANSPARENT,true);
 	
@@ -280,8 +370,19 @@ void DisplayHandler::drawTemperatureGauge(double tempC)
 	img.setTextDatum(4);
 	//img.setFreeFont(&FreeSansBold9pt7b);
 	img.loadFont(NotoSansMonoSCB20);
-	//img.drawNumber((int)tempC, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+15);
-	img.drawFloat((float)tempC, 1, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+15);
+	
+
+	if ((tempC > -9999) && (tempC < 9999)) //Don't display an invalid value
+	{
+		//img.drawNumber((int)tempC, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+15);
+		img.drawFloat((float)tempC, 1, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+15);
+	}
+	else
+	{
+		img.drawString("ERROR", (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+15);
+	}
+	
+	
 	img.drawString("C", (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+5, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+35);
 	img.unloadFont();
 	img.loadFont(NotoSansBold15);
@@ -315,6 +416,7 @@ void DisplayHandler::drawRPMGauge(int rawRPM)
 	//Prepare sprite
 	img.createSprite(GAUGE_DIAMETER+(GAUGE_PADDING*2), GAUGE_DIAMETER+(GAUGE_PADDING*2)+26);
 	img.fillSprite(TFT_BLACK);
+	img.setTextColor(TFT_WHITE);
 	
 	img.drawSmoothArc((GAUGE_DIAMETER+(GAUGE_PADDING*2))/2,(GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+20,(GAUGE_DIAMETER/2)+4,(GAUGE_DIAMETER/2)-GAUGE_ARC_THICKNESS-4,40,320,TFT_WHITE,TFT_TRANSPARENT,true);
 	
@@ -353,7 +455,16 @@ void DisplayHandler::drawRPMGauge(int rawRPM)
 	img.setTextDatum(4);
 	//img.setFreeFont(&FreeSansBold9pt7b);
 	img.loadFont(NotoSansMonoSCB20);
-	img.drawNumber(rawRPM, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+15);
+	
+	if ((rawRPM > 0) && (rawRPM < 99999))
+	{
+		img.drawNumber(rawRPM, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+15);
+	}
+	else
+	{
+		img.drawString("-", (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+15);
+	}
+	
 	img.drawString("RPM", (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2, (GAUGE_DIAMETER+(GAUGE_PADDING*2))/2+35);
 	
 	//Push to display

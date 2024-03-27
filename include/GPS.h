@@ -424,7 +424,7 @@ void GPSHandler::extractNMEA(char *str1) //Parse each NMEA sentence and separate
 			}
 			else
 			{
-				hdg = "INVALID"; //Warn of incorrect heading
+				hdg = "-1"; //Warn of incorrect heading
 			}
 		}
 		else

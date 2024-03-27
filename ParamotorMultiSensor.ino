@@ -1,9 +1,11 @@
 #include "include/Init.h"
+#include "include/Power.h"
 #include "include/GPS.h"
 #include "include/Display.h"
 #include "include/Temperature.h"
 #include "include/Tach.h"
 
+PowerHandler PWR = PowerHandler();
 DisplayHandler GUI = DisplayHandler();
 GPSHandler GPS = GPSHandler();
 TempHandler TEMP = TempHandler();
@@ -15,15 +17,16 @@ bool islogging = false;
 
 void setup() {
   pinSetup();
+  PWR.begin();
   GUI.begin();
-  GUI.splash();
+  GUI.loadMainView();
   commsSetup();
+  TEMP.begin(); 
   TACH.begin();
   GPS.begin();
   GPS.configure();
-  GUI.loadMainView();
-  TEMP.begin(); //Uncomment once temperature handler is done <-----------------
   
+ 
 
   /*Serial.println("Rebooted. Press button");
   
@@ -44,8 +47,12 @@ void loop() {
   //Serial.println(TEMP.getCompTemp());
   //Serial.println(TACH.getRPM());
 
-
-  GUI.update(TEMP.getCompTemp(),TACH.getRPM(),0,"Hi", 0, bat, false, "Hola", islogging); //Fake values, only bat is actually used for anything
+  //Serial.println(GPS.fix);
+  //Serial.println(GPS.sats.toInt());
+  //Serial.println(GPS.epochTime());
+  //Serial.println(GPS.hdg.toDouble());
+  
+  GUI.update(TEMP.getCompTemp(),TACH.getRPM(), GPS.fix, GPS.sats.toInt(), GPS.epochTime(), GPS.hdg.toInt(), PWR.getBatteryMillivolts(), PWR.isCharging(), islogging); 
 
   if (dir == 0)
     bat-=10;

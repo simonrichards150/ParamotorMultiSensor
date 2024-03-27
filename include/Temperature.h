@@ -36,20 +36,17 @@ TempHandler::TempHandler() //Constructor
 }
 
 void TempHandler::begin() //Initialise and configure the ADC and TMP1075
-{
-	//There is no need to configure the Wire pins etc as this is already done with Init.h - make sure that Init.h is included in the main sketch and the pinSetup() and commsSetup() functions are called first in the Arduino setup() function.
-	
+{	
 	adc.begin(0x69, &Wire); //Start the adc I2C using the Wire object - ADC is address 0x69
 	delay(200); //Just in case
 	enableFan(); //Turn on the fan
 	
+	//Configure ADC
 	adc.setGain(GAIN_8X);
 	adc.setResolution(RESOLUTION_18_BIT);
 	adc.setMode(MODE_CONTINUOUS);
 	
-	tmp1075.begin(); // Initialize TMP1075 sensor
-	
-	
+	tmp1075.begin(); // Initialise TMP1075 sensor
 }
 
 void TempHandler::enableFan()
