@@ -1,0 +1,268 @@
+//MicroSD Handler
+//Mozes Baiden
+
+#ifndef MICROSD_H
+#define MICROSD_H
+
+#include <Arduino.h>
+#include <FS.h>
+#include <SD_MMC.h>
+#include <Ticker.h>
+#include <time.h>
+
+class MicroSDHandler
+{
+public:
+	MicroSDHandler();
+	void begin();
+	void setInterval(int);
+	void startLogging();
+	void stopLogging();
+	void appendLog(); //This will be called by the ticker to actually write to the MicroSD
+	void tick(int, String, String, String, String, String, int, double, int, int, double, double, double, int, double, int); //This is called as often as possible to load new values ready to be written
+	int getStatus(); //Status 0=idle, 1=logging, -1=general error, 2=no card inserted, 3=low battery
+
+private:
+
+	Ticker logTicker;
+	fs::File logFile;
+
+	int logStatus = 0;
+	int logLineNum = 0;
+	int logInterval = 1;
+	String logFileName = "";
+	
+	int logTime, logHdg, logAlt, logSats, logRPM, logVbat = 0;
+	String logFix, logLat, logNS, logLon, logEW = "NULL";
+	double logSpeed, logHdop, logVdop, logPdop, logTemp = 0;
+	
+	static void ticker_trigger(MicroSDHandler* objectPtr) //Needed to be able to use the ticker from inside the class
+	{
+		objectPtr->appendLog();
+    }
+	
+	String getCurrentDate(bool);
+	String getCurrentTime(bool);
+	
+};
+
+
+MicroSDHandler::MicroSDHandler()
+{
+	//Nothing
+}
+
+void MicroSDHandler::begin()
+{
+	SD_MMC.setPins(SD_CLK, SD_CMD, SD_D0, SD_D1, SD_D2, SD_D3);	
+}
+
+void MicroSDHandler::setInterval(int secs)
+{
+	logInterval = secs;
+}
+
+void MicroSDHandler::startLogging()
+{
+	if (logFile) //If a file is open, don't make another one
+	{
+		Serial.println("Already logging!");
+		return;
+	}
+	
+	
+	if (!SD_MMC.begin()) //Initialise MicroSD
+	{
+        logStatus = -1;
+		return;
+    }
+	
+	//Open a new log file and start a ticker
+	logLineNum = 1;
+	
+	
+	//Come up with a unique filename, based on current time if available
+	if (logTime < 1) //Time is not valid
+	{
+		String filenamePrefix = "LOG_";
+		int filenameSuffix = 0;
+		
+		String filenameFull = "/" + filenamePrefix + String(filenameSuffix) + ".csv";
+		
+		while (SD_MMC.exists(filenameFull)) //Increment number if the file already exists
+		{
+			filenameSuffix++;
+			filenameFull = "/" + filenamePrefix + String(filenameSuffix) + ".csv";
+		}
+		
+		logFileName = filenameFull;
+	}
+	else //Time is valid
+	{
+		logFileName = "/LOG_" + getCurrentDate(true) + "_" + getCurrentTime(true) + ".csv"; //Don't check for existing file, not likely to conflict
+		
+		//Set system time (for file creation timestamp)
+		timeval epoch = {logTime, 0};
+		const timeval *tv = &epoch;
+		timezone gmt = {0,0};
+		const timezone *tz = &gmt;
+		settimeofday(tv, tz);		
+	}
+	
+	Serial.println(logFileName);
+	
+	
+	
+	logFile = SD_MMC.open(logFileName, FILE_APPEND); //Open the file in append mode
+    if (!logFile) {
+        logStatus = -1;  
+		return;
+    }
+	
+	String DL = ",";
+	String logLine = 	"LineNum" + DL + "Date" + DL + "Time" + DL + "Fix" + DL + "Latitude" + DL
+						+ "LatitudeDirection" + DL + "Longitude" + DL + "LongitudeDirection" + DL + "Heading" + DL + "SpeedKPH" + DL + "AltitudeM" + DL + "NumSatellites" + DL + "HDOP" + DL + "VDOP" + DL + "PDOP" + DL + "RPM" + DL + "Temperature" + DL + "BatteryVoltagemV" + "\n";
+	logFile.print(logLine);
+	
+	logTicker.attach(1, ticker_trigger, this);
+	logStatus = 1; //Logging
+}
+
+void MicroSDHandler::stopLogging()
+{
+	//Close the log file and stop ticker
+	logTicker.detach();
+	
+	
+	
+	if (logFile) {  // Check if the log file is open
+        logFile.close();  // Close the log file
+	}
+	SD_MMC.end();
+	
+	
+	
+	if (logStatus == 1)
+	{
+		logStatus = 0;
+	}
+	Serial.println(logLineNum-1);
+}
+
+void MicroSDHandler::appendLog()
+{
+	//Write a log line to the SD card from local variables
+	//Check if logStatus = 1 in case there's a race condition
+	
+	if (logStatus == 1)
+	{
+		String DL = ",";
+		String logLine = 	String(logLineNum) + DL + getCurrentDate(false) + DL + getCurrentTime(false) + DL + logFix + DL + logLat + 						DL + logNS + DL + logLon + DL + logEW + DL + String(logHdg) + DL + String(logSpeed) + DL + String(logAlt)
+							+ DL + String(logSats) + DL + String(logHdop) + DL + String(logVdop) + DL + String(logPdop) + DL + String(logRPM) + DL + String(logTemp) + DL + String(logVbat) + "\n";
+		logFile.print(logLine);
+	}
+	
+	logLineNum++;
+	//Serial.println("Logged a line!");
+}
+
+
+void MicroSDHandler::tick(int time, String fix, String lat, String NS, String lon, String EW, int hdg, double speed, int alt, int sats, double hdop, double vdop, double pdop, int rpm, double temp, int vbat)
+{
+	//Update local variables
+	logTime = time;
+	logHdg = hdg;
+	logAlt = alt;
+	logSats = sats;
+	logRPM = rpm;
+	logVbat = vbat;
+	logFix = fix;
+	logLat = lat;
+	logNS = NS;
+	logLon = lon;
+	logEW = EW;
+	logSpeed = speed;
+	logHdop = hdop;
+	logVdop = vdop;
+	logPdop = pdop;
+	logTemp = temp;
+
+	
+	if (vbat < 3100) //Check vbat and stop logging if too low
+	{
+		logStatus = 3;
+		stopLogging();
+		return;
+	}
+	if ((digitalRead(SD_CD) == HIGH) && (vbat >= 3100)) //Check if SD is inserted
+	{
+		logStatus = 2;
+		return;
+	}
+	else if (logStatus == 2) 
+	{
+		logStatus = 0;
+		return;
+	}
+	
+	
+}
+
+int MicroSDHandler::getStatus()
+{
+	return logStatus;
+}
+
+String MicroSDHandler::getCurrentDate(bool safeForFilename = false)
+{
+	if (logTime > 0)
+	{
+		time_t now = logTime;
+		struct tm *timeInfo = gmtime(&now);
+		char buffer[11];
+		if (safeForFilename)
+		{
+			strftime(buffer, sizeof(buffer), "%Y%m%d", timeInfo);
+		}
+		else
+		{
+			strftime(buffer, sizeof(buffer), "%Y-%m-%d", timeInfo);
+		}
+		
+		return String(buffer);
+	}
+	else
+	{
+		return String("NULL");
+	}
+}
+
+String MicroSDHandler::getCurrentTime(bool safeForFilename = false)
+{
+	if (logTime > 0)
+	{
+		time_t now = logTime;
+		struct tm *timeInfo = gmtime(&now);
+		char buffer[20];
+		if (safeForFilename)
+		{
+			strftime(buffer, sizeof(buffer), "%H%M%S", timeInfo);
+		}
+		else
+		{
+			strftime(buffer, sizeof(buffer), "%H:%M:%S", timeInfo);
+		}
+		return String(buffer);
+	}
+	else
+	{
+		return String("NULL");
+	}
+}
+
+
+
+
+
+
+#endif

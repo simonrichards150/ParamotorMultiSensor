@@ -4,16 +4,15 @@
 #include "include/Display.h"
 #include "include/Temperature.h"
 #include "include/Tach.h"
+#include "include/MicroSD.h"
 
 PowerHandler PWR = PowerHandler();
 DisplayHandler GUI = DisplayHandler();
 GPSHandler GPS = GPSHandler();
 TempHandler TEMP = TempHandler();
 TachHandler TACH = TachHandler();
+MicroSDHandler SD = MicroSDHandler();
 
-int bat = 1000;
-int dir = 0;
-bool islogging = false;
 
 void setup() {
   pinSetup();
@@ -23,10 +22,19 @@ void setup() {
   commsSetup();
   TEMP.begin(); 
   TACH.begin();
+  SD.begin();
   GPS.begin();
   GPS.configure();
   
- 
+ /*
+ digitalWrite(LED1, HIGH);
+ digitalWrite(LED2, LOW);
+ digitalWrite(LED3, LOW);
+ analogWrite(LEDR, 25);
+ analogWrite(LEDG, 25);
+ analogWrite(LEDB, 25);
+ */
+
 
   /*Serial.println("Rebooted. Press button");
   
@@ -38,41 +46,27 @@ void setup() {
 }
 
 void loop() {
+
+  if (digitalRead(BTN1) == HIGH)
+  {
+    SD.startLogging();
+    delay(2000);
+  }
+  else if (digitalRead(BTN2) == HIGH)
+  {
+    SD.stopLogging();
+    delay(2000);
+  }
   
   GPS.tick(0); //Update GPS
   //GPS.printVars(); //Print GPS information
 
-  //Serial.println(TEMP.getCJT()); //Uncomment once temperature handler is done <----------------
-  //Serial.println(TEMP.getUnCompTemp());
-  //Serial.println(TEMP.getCompTemp());
-  //Serial.println(TACH.getRPM());
+//CHANGE BACK TO COMPENSATED TEMPERATURE
+  GUI.update(TEMP.getCJT(),TACH.getRPM(), GPS.fix, GPS.sats.toInt(), GPS.epochTime(), GPS.hdg.toInt(), PWR.getBatteryMillivolts(), PWR.isCharging(), SD.getStatus()); 
 
-  //Serial.println(GPS.fix);
-  //Serial.println(GPS.sats.toInt());
-  //Serial.println(GPS.epochTime());
-  //Serial.println(GPS.hdg.toDouble());
-  
-  GUI.update(TEMP.getCompTemp(),TACH.getRPM(), GPS.fix, GPS.sats.toInt(), GPS.epochTime(), GPS.hdg.toInt(), PWR.getBatteryMillivolts(), PWR.isCharging(), islogging); 
+//CHANGE BACK TO COMPENSATED TEMPERATURE
+  SD.tick(GPS.epochTime(), GPS.fix, GPS.lat, GPS.latNS, GPS.lon, GPS.lonEW, GPS.hdg.toInt(), GPS.spd.toInt(), GPS.alt.toInt(), GPS.sats.toInt(), GPS.hdop.toDouble(), GPS.vdop.toDouble(), GPS.pdop.toDouble(), TACH.getRPM(), TEMP.getCJT(), PWR.getBatteryMillivolts());
 
-  if (dir == 0)
-    bat-=10;
 
-  if (dir == 1)
-    bat+=10;
-
-  if (bat < 10)
-  {
-    dir = 1;
-    islogging = true;
-  }
-
-  if (bat > 1000)
-  {
-    dir = 0;
-    islogging = false;
-  }
-  
-
-  
   //delay(500); 
 }

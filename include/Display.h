@@ -31,8 +31,8 @@
 #define GAUGE_ARC_THICKNESS 6
 #define GAUGE_YPOS 20
 
-#define TEMPERATURE_MIN 0 //500
-#define TEMPERATURE_MAX 50 //700
+#define TEMPERATURE_MIN 10 //500
+#define TEMPERATURE_MAX 40 //700
 #define TEMPERATURE_BG TFT_BLACK
 #define TEMPERATURE_FG 0xfba0 //TFT_ORANGE
 
@@ -47,7 +47,7 @@ public:
 
 	DisplayHandler();
 	void begin();
-	void update(double, int, String, int, int, int, int, bool, bool);
+	void update(double, int, String, int, int, int, int, bool, int);
 	void splash();
 	void loadMainView();
 	void setBacklight(int);
@@ -60,9 +60,9 @@ private:
 	void drawBatteryIndicator(int, bool);
 	void drawTemperatureGauge(double);
 	void drawRPMGauge(int);
-	void drawStatusBar(String, int, int, int, bool);
+	void drawStatusBar(String, int, int, int, int);
 	
-	bool loggingstate = false;
+	int loggingstate = 0;
 	
 }; //End class definition
 
@@ -86,27 +86,27 @@ void DisplayHandler::begin()
 	
 }
 
-void DisplayHandler::update(double temp, int rpm, String fix, int sats, int time, int hdg, int batt, bool chrg, bool logging)
+void DisplayHandler::update(double temp, int rpm, String fix, int sats, int time, int hdg, int batt, bool chrg, int logStatus)
 {
 	//Update the log button text
-	if (logging != loggingstate) //Only update if there's a change
+	if (logStatus != loggingstate) //Only update if there's a change
 	{
 		
-		if (logging)
+		if (logStatus == 1) //If logging, show the stop button text
 		{
 			tft.setTextColor(TFT_BLACK);
 			tft.drawString("Start Log >", DISPLAY_WIDTH-2, BUTTON1_Y);
 			tft.setTextColor(TFT_WHITE);
 			tft.drawString("Stop Log >", DISPLAY_WIDTH-2, BUTTON1_Y);
-			loggingstate = true;
+			loggingstate = logStatus;
 		}
-		else
+		else //If not logging, show the start button text
 		{
 			tft.setTextColor(TFT_BLACK);
 			tft.drawString("Stop Log >", DISPLAY_WIDTH-2, BUTTON1_Y);
 			tft.setTextColor(TFT_WHITE);
 			tft.drawString("Start Log >", DISPLAY_WIDTH-2, BUTTON1_Y);
-			loggingstate = false;
+			loggingstate = logStatus;
 		}
 	}
 	
@@ -121,7 +121,7 @@ void DisplayHandler::update(double temp, int rpm, String fix, int sats, int time
 	drawBatteryIndicator(batt, chrg);
 	
 	//Update the status bar
-	drawStatusBar(fix, sats, time, hdg, logging);
+	drawStatusBar(fix, sats, time, hdg, logStatus);
 }
 
 void DisplayHandler::splash()
@@ -159,8 +159,8 @@ void DisplayHandler::loadMainView()
 	
 }
 
-void DisplayHandler::drawStatusBar(String fix, int sats, int time, int hdg, bool logging)
-{
+void DisplayHandler::drawStatusBar(String fix, int sats, int time, int hdg, int logStatus)
+{	
 	img.createSprite(280,STATUSBAR_HEIGHT); //Status bar 280px wide excluding battery indicator
 	img.fillSprite(STATUSBAR_BG);
 	img.unloadFont();
@@ -188,19 +188,33 @@ void DisplayHandler::drawStatusBar(String fix, int sats, int time, int hdg, bool
 	//Time end
 	
 	//Log status begin
-	if (logging)
+	if (logStatus == 1)
 	{
 		img.drawString("LOGGING", 70, STATUSBAR_HEIGHT/2);
 	}
-	else
+	else if (logStatus == 0)
 	{
 		img.drawString("IDLE", 70, STATUSBAR_HEIGHT/2);
 	}
+	else if (logStatus < 0)
+	{
+		img.drawString("LOG ERR", 70, STATUSBAR_HEIGHT/2);
+	}
+	else if (logStatus == 2)
+	{
+		img.drawString("NO CARD", 70, STATUSBAR_HEIGHT/2);
+	}
+	else if (logStatus == 3)
+	{
+		img.drawString("LOW BAT", 70, STATUSBAR_HEIGHT/2);
+	}
+	
+	
 	//Log status end
 	
 	//GPS status begin
 	//Fix and satellites
-	if (fix == "NOFIX")
+	if (fix != "3D")
 	{
 		img.setTextColor(TFT_RED);
 		img.drawString("NOFIX", 160, STATUSBAR_HEIGHT/2);
@@ -229,14 +243,12 @@ void DisplayHandler::drawStatusBar(String fix, int sats, int time, int hdg, bool
 	img.unloadFont();
 	img.loadFont(NotoSansBold15);
 	img.drawString("o", 270, (STATUSBAR_HEIGHT/2)-6); //Degree symbol
-	
 	//GPS status end
-	
-	
 	
 	//Push to display
 	img.pushSprite(0, STATUSBAR_OFFSET+2, TFT_TRANSPARENT);
 	img.deleteSprite();
+
 	
 }
 
@@ -244,7 +256,7 @@ void DisplayHandler::drawBatteryIndicator(int batt, bool chg)
 {
 	int pc = 0;
 	
-	if (batt >= 4100) //Full battery
+	if (batt >= 4200) //Full battery
 	{
 		pc = 100;
 	}
@@ -258,15 +270,15 @@ void DisplayHandler::drawBatteryIndicator(int batt, bool chg)
 	}
 	
 	//Draw battery indicator
-	img.createSprite(32,STATUSBAR_HEIGHT-8);
+	img.createSprite(33,STATUSBAR_HEIGHT-8);
 	img.fillSprite(TFT_TRANSPARENT);
 	
-	img.drawRoundRect(0,0,28,STATUSBAR_HEIGHT-8,1,TFT_WHITE);
-	img.fillRoundRect(27,((STATUSBAR_HEIGHT-8)/2)-3,3,6,1,TFT_WHITE);
+	img.drawRoundRect(0,0,29,STATUSBAR_HEIGHT-8,1,TFT_WHITE);
+	img.fillRoundRect(28,((STATUSBAR_HEIGHT-8)/2)-3,3,6,1,TFT_WHITE);
 	
 	if (chg) //Charging (battery reading is wrong when charging)
 	{
-		img.fillRoundRect(2,2,24,STATUSBAR_HEIGHT-12,0,TFT_BLACK);
+		img.fillRoundRect(2,2,25,STATUSBAR_HEIGHT-12,0,TFT_BLACK);
 		img.setTextDatum(4);
 		img.setTextColor(TFT_WHITE);
 		img.unloadFont();
@@ -277,16 +289,16 @@ void DisplayHandler::drawBatteryIndicator(int batt, bool chg)
 	{
 		
 		//Fill the variable part of the indicator with background colour
-		img.fillRoundRect(2,2,24,STATUSBAR_HEIGHT-12,0,TFT_BLACK);
+		img.fillRoundRect(2,2,25,STATUSBAR_HEIGHT-12,0,TFT_BLACK);
 		
 		//Draw battery percentage indicator (colour according to percentage)
-		if (pc >= 60) //Above 60% in green
+		if (pc >= 50) //Above 50% in green
 		{
-			img.fillRoundRect(2,2,(24.0/100.0)*pc,STATUSBAR_HEIGHT-12,0,TFT_GREEN);
+			img.fillRoundRect(2,2,(25.0/100.0)*pc,STATUSBAR_HEIGHT-12,0,TFT_GREEN);
 		}
 		else if (pc >= 20) //Above 20% in orange
 		{
-			img.fillRoundRect(2,2,(24.0/100.0)*pc,STATUSBAR_HEIGHT-12,0,TFT_ORANGE);
+			img.fillRoundRect(2,2,(25.0/100.0)*pc,STATUSBAR_HEIGHT-12,0,TFT_ORANGE);
 		}
 		else if (pc < 20) //<20% in red
 		{
@@ -295,7 +307,7 @@ void DisplayHandler::drawBatteryIndicator(int batt, bool chg)
 				pc = 5; //Keep a tiny bit of red even when the percentage should show nothing
 			}
 			
-			img.fillRoundRect(2,2,(24.0/100.0)*pc,STATUSBAR_HEIGHT-12,0,TFT_RED);
+			img.fillRoundRect(2,2,(25.0/100.0)*pc,STATUSBAR_HEIGHT-12,0,TFT_RED);
 		}
 	}
 	
