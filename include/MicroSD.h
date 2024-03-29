@@ -18,6 +18,7 @@ public:
 	void setInterval(int);
 	void startLogging();
 	void stopLogging();
+	void toggleLogging();
 	void appendLog(); //This will be called by the ticker to actually write to the MicroSD
 	void tick(int, String, String, String, String, String, int, double, int, int, double, double, double, int, double, int); //This is called as often as possible to load new values ready to be written
 	int getStatus(); //Status 0=idle, 1=logging, -1=general error, 2=no card inserted, 3=low battery
@@ -62,11 +63,35 @@ void MicroSDHandler::setInterval(int secs)
 	logInterval = secs;
 }
 
+void MicroSDHandler::toggleLogging()
+{
+	if (logStatus != 1)
+	{
+		startLogging();
+	}
+	else if (logStatus == 1)
+	{
+		stopLogging();
+	}
+}
+
 void MicroSDHandler::startLogging()
 {
 	if (logFile) //If a file is open, don't make another one
 	{
 		Serial.println("Already logging!");
+		return;
+	}
+	
+	if (logStatus == 2) //If no card, don't start logging
+	{
+		Serial.println("No card!");
+		return;
+	}
+	
+	if (logStatus == 3) //If battery is too low, don't start logging
+	{
+		Serial.println("Battery too low!");
 		return;
 	}
 	
@@ -121,7 +146,11 @@ void MicroSDHandler::startLogging()
 	
 	String DL = ",";
 	String logLine = "LineNum" + DL + "Date" + DL + "Time" + DL + "Fix" + DL + "Latitude" + DL + "Longitude" + DL + "Heading" + DL + "Speed" + DL + "Altitude" + DL + "NumSats" + DL + "HDOP" + DL + "VDOP" + DL + "PDOP" + DL + "RPM" + DL + "Temperature" + DL + "Vbat" + "\n";
-	logFile.print(logLine);
+	if (!logFile.print(logLine))
+	{
+		logStatus = -1;
+		stopLogging();
+	}
 	
 	logTicker.attach(1, ticker_trigger, this);
 	logStatus = 1; //Logging
@@ -181,7 +210,11 @@ void MicroSDHandler::appendLog()
 		 
 		
 		String logLine = String(logLineNum) + DL + getCurrentDate(false) + DL + getCurrentTime(false) + DL + logFix + DL + finalLat + DL + finalLon + DL + String(logHdg) + DL + String(logSpeed) + DL + String(logAlt) + DL + String(logSats) + DL + String(logHdop) + DL + String(logVdop) + DL + String(logPdop) + DL + String(logRPM) + DL + String(logTemp) + DL + String(logVbat) + "\n";
-		logFile.print(logLine);
+		if (!logFile.print(logLine))
+		{
+			logStatus = -1;
+			stopLogging();
+		}
 	}
 	
 	logLineNum++;
@@ -216,7 +249,7 @@ void MicroSDHandler::tick(int time, String fix, String lat, String NS, String lo
 		stopLogging();
 		return;
 	}
-	if ((digitalRead(SD_CD) == HIGH) && (vbat >= 3100)) //Check if SD is inserted
+	else if ((digitalRead(SD_CD) == HIGH) && (vbat >= 3100)) //Check if SD is inserted
 	{
 		logStatus = 2;
 		if (logFile) //Check if the card was removed during logging
@@ -225,7 +258,7 @@ void MicroSDHandler::tick(int time, String fix, String lat, String NS, String lo
 		}
 		return;
 	}
-	else if (logStatus == 2) 
+	else if ((logStatus == 2) || (logStatus == 3))
 	{
 		logStatus = 0;
 		return;
