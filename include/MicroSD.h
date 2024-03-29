@@ -70,13 +70,13 @@ void MicroSDHandler::startLogging()
 		return;
 	}
 	
-	
-	if (!SD_MMC.begin()) //Initialise MicroSD
+	if (!SD_MMC.begin("/microsd", false, false, SDMMC_FREQ_52M, 1)) //Initialise MicroSD
 	{
-        logStatus = -1;
+		logStatus = -1;
 		return;
     }
 	
+
 	//Open a new log file and start a ticker
 	logLineNum = 1;
 	
@@ -120,8 +120,7 @@ void MicroSDHandler::startLogging()
     }
 	
 	String DL = ",";
-	String logLine = 	"LineNum" + DL + "Date" + DL + "Time" + DL + "Fix" + DL + "Latitude" + DL
-						+ "LatitudeDirection" + DL + "Longitude" + DL + "LongitudeDirection" + DL + "Heading" + DL + "SpeedKPH" + DL + "AltitudeM" + DL + "NumSatellites" + DL + "HDOP" + DL + "VDOP" + DL + "PDOP" + DL + "RPM" + DL + "Temperature" + DL + "BatteryVoltagemV" + "\n";
+	String logLine = "LineNum" + DL + "Date" + DL + "Time" + DL + "Fix" + DL + "Latitude" + DL + "Longitude" + DL + "Heading" + DL + "Speed" + DL + "Altitude" + DL + "NumSats" + DL + "HDOP" + DL + "VDOP" + DL + "PDOP" + DL + "RPM" + DL + "Temperature" + DL + "Vbat" + "\n";
 	logFile.print(logLine);
 	
 	logTicker.attach(1, ticker_trigger, this);
@@ -156,9 +155,32 @@ void MicroSDHandler::appendLog()
 	
 	if (logStatus == 1)
 	{
-		String DL = ",";
-		String logLine = 	String(logLineNum) + DL + getCurrentDate(false) + DL + getCurrentTime(false) + DL + logFix + DL + logLat + 						DL + logNS + DL + logLon + DL + logEW + DL + String(logHdg) + DL + String(logSpeed) + DL + String(logAlt)
-							+ DL + String(logSats) + DL + String(logHdop) + DL + String(logVdop) + DL + String(logPdop) + DL + String(logRPM) + DL + String(logTemp) + DL + String(logVbat) + "\n";
+		String DL = ","; //Delimiter
+		
+		//Negate the lat/lon if necessary
+		String finalLat = "";
+		String finalLon = "";
+		
+		if (logNS == "S")
+		{
+			finalLat = "-" + String(logLat);
+		}
+		else
+		{
+			finalLat = logLat;
+		}
+		
+		if (logEW == "W")
+		{
+			finalLon = "-" + String(logLon);
+		}
+		else
+		{
+			finalLon = logLon;
+		}
+		 
+		
+		String logLine = String(logLineNum) + DL + getCurrentDate(false) + DL + getCurrentTime(false) + DL + logFix + DL + finalLat + DL + finalLon + DL + String(logHdg) + DL + String(logSpeed) + DL + String(logAlt) + DL + String(logSats) + DL + String(logHdop) + DL + String(logVdop) + DL + String(logPdop) + DL + String(logRPM) + DL + String(logTemp) + DL + String(logVbat) + "\n";
 		logFile.print(logLine);
 	}
 	
@@ -197,6 +219,10 @@ void MicroSDHandler::tick(int time, String fix, String lat, String NS, String lo
 	if ((digitalRead(SD_CD) == HIGH) && (vbat >= 3100)) //Check if SD is inserted
 	{
 		logStatus = 2;
+		if (logFile) //Check if the card was removed during logging
+		{
+			stopLogging();
+		}
 		return;
 	}
 	else if (logStatus == 2) 
