@@ -13,10 +13,6 @@
 #define greenSourcePin	LEDG
 #define blueSourcePin	LEDB
 
-#define amberTemp		28.5
-#define redTemp			30
-	
-
 class LEDHandler 
 {
 public:
@@ -26,10 +22,16 @@ public:
 	void enable();
 	void disable();
 	int getLEDStatus();
+	void setAmberThreshold(double);
+	void setRedThreshold(double);
+	double getAmberThreshold();
+	double getRedThreshold();
 	
 private:
 	int LEDStatus = 0;
     bool LEDEnabled = true;
+	double amberThreshold = 28.5; //Threshold temperature to turn to amber
+	double redThreshold = 30; //Threshold temperature to turn to red
 	
 	void setLEDColour(int); // Function to set LED colour (-1=off, 0=red, 1=amber, 2=green)
 };
@@ -67,11 +69,11 @@ void LEDHandler::tick(double temp)
 {
 	if (LEDEnabled)
 	{
-		if (temp > redTemp)
+		if (temp > redThreshold)
 		{
 			setLEDColour(2); //Red
 		}
-		else if (temp > amberTemp)
+		else if (temp > amberThreshold)
 		{
 			setLEDColour(1); //Amber
 		}
@@ -115,6 +117,42 @@ void LEDHandler::setLEDColour(int colour)
 	LEDStatus = colour;
 }
 
+void LEDHandler::setAmberThreshold(double newThreshold)
+{
+	if (newThreshold < redThreshold)
+	{
+		amberThreshold = newThreshold;
+	}
+	else
+	{
+		Serial.print("Amber threshold can't be greater than red threshold (");
+		Serial.print(redThreshold);
+		Serial.println(")");
+	}
+}
+void LEDHandler::setRedThreshold(double newThreshold)
+{
+	if (newThreshold > amberThreshold)
+	{
+		redThreshold = newThreshold;
+	}
+	else
+	{
+		Serial.print("Red threshold must be greater than amber threshold (");
+		Serial.print(amberThreshold);
+		Serial.println(")");
+	}
+}
+
+double LEDHandler::getAmberThreshold()
+{
+	return amberThreshold;
+}
+
+double LEDHandler::getRedThreshold()
+{
+	return redThreshold;
+}
 
 
 

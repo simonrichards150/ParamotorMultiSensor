@@ -20,7 +20,7 @@ public:
 	void stopLogging();
 	void toggleLogging();
 	void appendLog(); //This will be called by the ticker to actually write to the MicroSD
-	void tick(int, String, String, String, String, String, int, double, int, int, double, double, double, int, double, int); //This is called as often as possible to load new values ready to be written
+	void tick(int, String, String, String, String, String, int, double, int, int, double, double, double, int, double, int, int); //This is called as often as possible to load new values ready to be written
 	int getStatus(); //Status 0=idle, 1=logging, -1=general error, 2=no card inserted, 3=low battery
 
 private:
@@ -33,7 +33,7 @@ private:
 	int logInterval = 1;
 	String logFileName = "";
 	
-	int logTime, logHdg, logAlt, logSats, logRPM, logVbat = 0;
+	int logTime, logHdg, logAlt, logSats, logRPM, logVbat, logLEDState = -1;
 	String logFix, logLat, logNS, logLon, logEW = "NULL";
 	double logSpeed, logHdop, logVdop, logPdop, logTemp = 0;
 	
@@ -124,7 +124,7 @@ void MicroSDHandler::startLogging()
 	}
 	else //Time is valid
 	{
-		logFileName = "/LOG_" + getCurrentDate(true) + "_" + getCurrentTime(true) + ".csv"; //Don't check for existing file, not likely to conflict
+		logFileName = "/LOG_" + getCurrentDate(true) + "_" + getCurrentTime(true) + ".csv"; //Don't check for existing file, not likely to conflict (one second per year)
 		
 		//Set system time (for file creation timestamp)
 		timeval epoch = {logTime, 0};
@@ -145,7 +145,7 @@ void MicroSDHandler::startLogging()
     }
 	
 	String DL = ",";
-	String logLine = "LineNum" + DL + "Date" + DL + "Time" + DL + "Fix" + DL + "Latitude" + DL + "Longitude" + DL + "Heading" + DL + "Speed" + DL + "Altitude" + DL + "NumSats" + DL + "HDOP" + DL + "VDOP" + DL + "PDOP" + DL + "RPM" + DL + "Temperature" + DL + "Vbat" + "\n";
+	String logLine = "LineNum" + DL + "Date" + DL + "Time" + DL + "Fix" + DL + "Latitude" + DL + "Longitude" + DL + "Heading" + DL + "Speed" + DL + "Altitude" + DL + "NumSats" + DL + "HDOP" + DL + "VDOP" + DL + "PDOP" + DL + "RPM" + DL + "Temperature" + DL + "Vbat" + DL + "LEDState" + "\n";
 	if (!logFile.print(logLine))
 	{
 		logStatus = -1;
@@ -207,9 +207,29 @@ void MicroSDHandler::appendLog()
 		{
 			finalLon = logLon;
 		}
-		 
 		
-		String logLine = String(logLineNum) + DL + getCurrentDate(false) + DL + getCurrentTime(false) + DL + logFix + DL + finalLat + DL + finalLon + DL + String(logHdg) + DL + String(logSpeed) + DL + String(logAlt) + DL + String(logSats) + DL + String(logHdop) + DL + String(logVdop) + DL + String(logPdop) + DL + String(logRPM) + DL + String(logTemp) + DL + String(logVbat) + "\n";
+		//Convert LED state to human readable text
+		String finalLEDState = "";
+		
+		if (logLEDState == -1)
+		{
+			finalLEDState = "OFF";
+		}
+		else if (logLEDState == 0)
+		{
+			finalLEDState = "GREEN";
+		}
+		else if (logLEDState == 1)
+		{
+			finalLEDState = "AMBER";
+		}
+		else if (logLEDState == 2)
+		{
+			finalLEDState = "RED";
+		}
+		
+		 
+		String logLine = String(logLineNum) + DL + getCurrentDate(false) + DL + getCurrentTime(false) + DL + logFix + DL + finalLat + DL + finalLon + DL + String(logHdg) + DL + String(logSpeed) + DL + String(logAlt) + DL + String(logSats) + DL + String(logHdop) + DL + String(logVdop) + DL + String(logPdop) + DL + String(logRPM) + DL + String(logTemp) + DL + String(logVbat) + DL + finalLEDState + "\n";
 		if (!logFile.print(logLine))
 		{
 			logStatus = -1;
@@ -222,7 +242,7 @@ void MicroSDHandler::appendLog()
 }
 
 
-void MicroSDHandler::tick(int time, String fix, String lat, String NS, String lon, String EW, int hdg, double speed, int alt, int sats, double hdop, double vdop, double pdop, int rpm, double temp, int vbat)
+void MicroSDHandler::tick(int time, String fix, String lat, String NS, String lon, String EW, int hdg, double speed, int alt, int sats, double hdop, double vdop, double pdop, int rpm, double temp, int vbat, int LEDState)
 {
 	//Update local variables
 	logTime = time;
@@ -241,6 +261,7 @@ void MicroSDHandler::tick(int time, String fix, String lat, String NS, String lo
 	logVdop = vdop;
 	logPdop = pdop;
 	logTemp = temp;
+	logLEDState = LEDState;
 
 	
 	if (vbat < 3100) //Check vbat and stop logging if too low

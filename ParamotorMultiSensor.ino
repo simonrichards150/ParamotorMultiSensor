@@ -54,7 +54,7 @@ void loop() {
   GUI.update(TEMP.getCompTemp(),TACH.getRPM(), GPS.fix, GPS.sats.toInt(), GPS.epochTime(), GPS.hdg.toInt(), PWR.getBatteryMillivolts(), PWR.isCharging(), SD.getStatus()); 
 
   //Update MicroSD handler with new values
-  SD.tick(GPS.epochTime(), GPS.fix, GPS.lat, GPS.latNS, GPS.lon, GPS.lonEW, GPS.hdg.toInt(), GPS.spd.toInt(), GPS.alt.toInt(), GPS.sats.toInt(), GPS.hdop.toDouble(), GPS.vdop.toDouble(), GPS.pdop.toDouble(), TACH.getRPM(), TEMP.getCompTemp(), PWR.getBatteryMillivolts());
+  SD.tick(GPS.epochTime(), GPS.fix, GPS.lat, GPS.latNS, GPS.lon, GPS.lonEW, GPS.hdg.toInt(), GPS.spd.toInt(), GPS.alt.toInt(), GPS.sats.toInt(), GPS.hdop.toDouble(), GPS.vdop.toDouble(), GPS.pdop.toDouble(), TACH.getRPM(), TEMP.getCompTemp(), PWR.getBatteryMillivolts(), LEDS.getLEDStatus());
 
   //Refresh the LEDs
   LEDS.tick(TEMP.getCompTemp());
