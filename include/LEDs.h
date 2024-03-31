@@ -27,13 +27,14 @@ public:
 	void setRedThreshold(double);
 	double getAmberThreshold();
 	double getRedThreshold();
+	void sleep();
 	
 private:
 	int LEDState = 0;
     bool LEDEnabled = true;
 	double amberThreshold = 28.5; //Threshold temperature to turn to amber
 	double redThreshold = 29; //Threshold temperature to turn to red
-	double hysteresisValue = 0.02; //Hysteresis for state change
+	double hysteresisValue = 0.2; //Hysteresis for state change
 	
 	void setLEDColour(int); // Function to set LED colour (-1=off, 0=red, 1=amber, 2=green)
 };
@@ -96,14 +97,14 @@ void LEDHandler::tick(double temp)
 		
 		if (LEDStateValue == 0) //If currently green
 		{
-			if (temp >= amberThreshold + hysteresisValue)
+			if (temp >= amberThreshold)
 			{
 				setLEDColour(1); //Amber
 			}
 		}
 		else if (LEDStateValue == 1) //If currently amber
 		{
-			if (temp >= redThreshold + hysteresisValue)
+			if (temp >= redThreshold)
 			{
 				setLEDColour(2); //Red
 			}
@@ -199,6 +200,10 @@ double LEDHandler::getRedThreshold()
 	return redThreshold;
 }
 
+void LEDHandler::sleep()
+{
+	
+}
 
 
 #endif

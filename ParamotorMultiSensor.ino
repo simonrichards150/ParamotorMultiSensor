@@ -16,12 +16,44 @@ TachHandler TACH = TachHandler();
 MicroSDHandler SD = MicroSDHandler();
 LEDHandler LEDS = LEDHandler();
 
+OneButton LogButton(BTN1, false, false);
+OneButton LEDButton(BTN2, false, false);
+OneButton PowerButton(BTN3, false, false);
+
+void IRAM_ATTR checkButtonTicks() //Buttons ISR
+{
+  LogButton.tick(); 
+  LEDButton.tick();
+  PowerButton.tick();
+}
+
+//Button functions
+void toggleLog()
+{
+  SD.toggleLogging();
+}
+
+void toggleLEDs()
+{
+  LEDS.toggleEnable();
+}
+
+void sleep()
+{
+//Add sleep functions to peripherals and put here
+  SD.sleep();
+  TEMP.sleep();
+  TACH.sleep();
+  LEDS.sleep();
+  GUI.sleep();
+  GPS.sleep();
+  PWR.sleep();
+}
 
 void setup() {
   pinSetup();
   PWR.begin();
   GUI.begin();
-  GUI.loadMainView();
   commsSetup();
   LEDS.begin();
   TEMP.begin(); 
@@ -30,30 +62,21 @@ void setup() {
   GPS.begin();
   GPS.configure();
 
-  /*Serial.println("Rebooted. Press button");
-  
-  while(!digitalRead(BTN1)) //In case of crash this will halt the program after reboot
-  {
-    ;
-  }
-  digitalWrite(TACH_EN, HIGH);*/
+  //Configure button interrupts
+  attachInterrupt(digitalPinToInterrupt(BTN1), checkButtonTicks, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(BTN2), checkButtonTicks, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(BTN3), checkButtonTicks, CHANGE);
+
+  //Configure button functions
+  LogButton.attachClick(toggleLog);
+  LEDButton.attachClick(toggleLEDs);
+  PowerButton.setPressMs(2000);
+  PowerButton.attachLongPressStart(sleep);
 }
 
 void loop() {
 
-  if (digitalRead(BTN1) == HIGH)
-  {
-    SD.toggleLogging();
-    delay(1000);
-  }
-
-  if (digitalRead(BTN2) == HIGH)
-  {
-    LEDS.toggleEnable();
-    delay(1000);
-  }
-
-  
+  checkButtonTicks();
   
   //Get new GPS position etc
   GPS.tick(0); 
@@ -67,5 +90,5 @@ void loop() {
   //Refresh the LEDs
   LEDS.tick(TEMP.getCompTemp());
 
-  //delay(500); 
+  //delay(500); //For debug only
 }

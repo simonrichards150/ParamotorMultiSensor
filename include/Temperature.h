@@ -18,6 +18,7 @@ public:
 	double getCJT();
 	double getCompTemp();
 	double getUnCompTemp();
+	void sleep();
 
 private:
 	Adafruit_MCP3421 adc; //ADC object
@@ -71,6 +72,11 @@ double TempHandler::getCompTemp()
 	int16_t adcValue = adc.readADC();
 	double millivolts = (double)adcValue * 2048.0 / 131072.0 / 8.0;
 	return thermocoupleConvert(tmp1075.getTemperatureCelsius(), millivolts);
+}
+
+void TempHandler::sleep()
+{
+	
 }
 
 //-------End main class functions - don't edit below this line--------

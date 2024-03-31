@@ -51,6 +51,7 @@ public:
 	void splash();
 	void loadMainView();
 	void setBacklight(int);
+	void sleep();
 	
 	
 private:
@@ -83,6 +84,7 @@ void DisplayHandler::begin()
 	tft.setTextColor(TFT_WHITE, TFT_BLACK, true);
 	img.setAttribute(PSRAM_ENABLE, false);
 	img.setColorDepth(16);
+	loadMainView();
 	
 }
 
@@ -155,8 +157,8 @@ void DisplayHandler::loadMainView()
 	
 	
 	drawBatteryIndicator(4200, false);
-	drawTemperatureGauge(1);
-	drawRPMGauge(1);
+	drawTemperatureGauge(0);
+	drawRPMGauge(-1);
 	
 	
 }
@@ -496,6 +498,11 @@ void DisplayHandler::setBacklight(int pc)
 	{
 		return;
 	}
+}
+
+void DisplayHandler::sleep()
+{
+	
 }
 
 

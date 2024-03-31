@@ -18,6 +18,7 @@ public:
 	void parseNMEA(char);
 	void printVars();
 	int epochTime();
+	void sleep();
 	
 	bool timeValid = false;
 	
@@ -573,6 +574,11 @@ int GPSHandler::epochTime() //Get epoch time in time_t format - not synchronised
 	{
 		return -1; //Time is not valid
 	}
+}
+
+void GPSHandler::sleep()
+{
+	
 }
 
 #endif

@@ -22,6 +22,7 @@ public:
 	void appendLog(); //This will be called by the ticker to actually write to the MicroSD
 	void tick(int, String, String, String, String, String, int, double, int, int, double, double, double, int, double, int, int); //This is called as often as possible to load new values ready to be written
 	int getStatus(); //Status 0=idle, 1=logging, -1=general error, 2=no card inserted, 3=low battery
+	void sleep();
 
 private:
 
@@ -341,6 +342,10 @@ String MicroSDHandler::getCurrentTime(bool safeForFilename = false)
 	}
 }
 
+void MicroSDHandler::sleep()
+{
+	
+}
 
 
 
