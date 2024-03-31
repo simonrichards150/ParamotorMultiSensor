@@ -21,17 +21,19 @@ public:
 	void tick(double);
 	void enable();
 	void disable();
-	int getLEDStatus();
+	void toggleEnable();
+	int getLEDState(); //Returns current LED state (excluding off state)
 	void setAmberThreshold(double);
 	void setRedThreshold(double);
 	double getAmberThreshold();
 	double getRedThreshold();
 	
 private:
-	int LEDStatus = 0;
+	int LEDState = 0;
     bool LEDEnabled = true;
 	double amberThreshold = 28.5; //Threshold temperature to turn to amber
-	double redThreshold = 30; //Threshold temperature to turn to red
+	double redThreshold = 29; //Threshold temperature to turn to red
+	double hysteresisValue = 0.02; //Hysteresis for state change
 	
 	void setLEDColour(int); // Function to set LED colour (-1=off, 0=red, 1=amber, 2=green)
 };
@@ -43,8 +45,16 @@ LEDHandler::LEDHandler()
 
 void LEDHandler::begin()
 {
-	if (LEDEnabled)
+	if (LEDEnabled == true)
 	{
+		setLEDColour(0); //Green
+		delay(250);
+		setLEDColour(1); //Amber
+		delay(500);
+		setLEDColour(2); //Red
+		delay(500);
+		setLEDColour(1); //Amber
+		delay(500);
 		setLEDColour(0); //Green
 	}
 	else
@@ -55,38 +65,70 @@ void LEDHandler::begin()
 
 void LEDHandler::enable()
 {
-	setLEDColour(0); //Green
 	LEDEnabled = true;
 }
 
 void LEDHandler::disable()
 {
 	LEDEnabled = false;
-	setLEDColour(-1); //Off
+}
+
+void LEDHandler::toggleEnable()
+{
+	LEDEnabled = !LEDEnabled;
 }
 
 void LEDHandler::tick(double temp) 
 {
-	if (LEDEnabled)
-	{
-		if (temp > redThreshold)
+	if (LEDEnabled == true)
+	{		
+
+		setLEDColour(LEDState);
+		
+		if (temp <= -100) //Temperature error
 		{
 			setLEDColour(2); //Red
+			return;
 		}
-		else if (temp > amberThreshold)
+		
+		int LEDStateValue = LEDState;
+		temp = round(temp*100)/100; //Round to 2 decimal places
+		
+		if (LEDStateValue == 0) //If currently green
 		{
-			setLEDColour(1); //Amber
+			if (temp >= amberThreshold + hysteresisValue)
+			{
+				setLEDColour(1); //Amber
+			}
 		}
-		else
+		else if (LEDStateValue == 1) //If currently amber
 		{
-			setLEDColour(0); //Green
+			if (temp >= redThreshold + hysteresisValue)
+			{
+				setLEDColour(2); //Red
+			}
+			else if (temp <= amberThreshold - hysteresisValue)
+			{
+				setLEDColour(0); //Green
+			}
 		}
+		else if (LEDStateValue == 2) //If currently red
+		{
+			if (temp <= redThreshold - hysteresisValue)
+			{
+				setLEDColour(1); //Amber
+			}
+		}
+	}
+	else
+	{
+		setLEDColour(-1); //Off
 	}
 }
 
-int LEDHandler::getLEDStatus()
+int LEDHandler::getLEDState()
 {
-	return LEDStatus;
+	return LEDState;
 }
 
 void LEDHandler::setLEDColour(int colour) 
@@ -114,7 +156,10 @@ void LEDHandler::setLEDColour(int colour)
         digitalWrite(greenSourcePin, HIGH);
     }
 	
-	LEDStatus = colour;
+	if (colour > -1)
+	{
+		LEDState = colour;
+	}
 }
 
 void LEDHandler::setAmberThreshold(double newThreshold)

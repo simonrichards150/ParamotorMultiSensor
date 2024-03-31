@@ -173,8 +173,9 @@ void MicroSDHandler::stopLogging()
 	if (logStatus == 1)
 	{
 		logStatus = 0;
+		Serial.println(logLineNum-1);
 	}
-	Serial.println(logLineNum-1);
+	
 }
 
 void MicroSDHandler::appendLog()

@@ -13,6 +13,7 @@ public:
 	void begin();
 	int getBatteryMillivolts();
 	bool isCharging();
+	void goToSleep();
 
 private:
 	
@@ -46,6 +47,11 @@ bool PowerHandler::isCharging()
 	{
 		return false;
 	}
+}
+
+void PowerHandler::goToSleep()
+{
+	
 }
 
 

@@ -26,8 +26,6 @@
 #ifndef INIT_H
 #define INIT_H
 
-#include <Arduino.h>
-
 //Buttons - idle low, high when pressed
 #define BTN1	1	//Top button
 #define BTN2	2	//Middle button

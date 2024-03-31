@@ -147,7 +147,9 @@ void DisplayHandler::loadMainView()
 	tft.setTextColor(TFT_WHITE);
 	tft.setTextFont(2);
 	tft.drawString("Power Off >", DISPLAY_WIDTH-2, BUTTON3_Y);
-	tft.drawString("Backlight >", DISPLAY_WIDTH-2, BUTTON2_Y);
+	tft.drawString("LEDs", DISPLAY_WIDTH-14, BUTTON2_Y-8);
+	tft.drawString("On/Off", DISPLAY_WIDTH-14, BUTTON2_Y+8);
+	tft.drawString(" >", DISPLAY_WIDTH-2, BUTTON2_Y);
 
 	tft.drawString("Start Log >", DISPLAY_WIDTH-2, BUTTON1_Y); //Won't be logging when this is drawn
 	
