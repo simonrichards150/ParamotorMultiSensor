@@ -62,7 +62,7 @@ void GPSHandler::reset()
 void GPSHandler::configure()
 {
 	//Set Update Rate
-	int GPSUpdateRate = 5; //Update rate in Hz
+	int GPSUpdateRate = 2; //Update rate in Hz
 	
 	GPSUpdateRate = 1000 / GPSUpdateRate;
 	char GPSUpdateRateSelect[13];

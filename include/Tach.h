@@ -12,6 +12,7 @@
 #define TACH_RPM_MIN 300
 #define countArraySize 7
 #define countsSinceLastPulseLimit 10
+#define sparksPerRevolution 2
 
 class TachHandler
 {
@@ -43,7 +44,7 @@ void cap_event_handler(void *arg)
 	portENTER_CRITICAL_ISR(&timer_mux); // Disable other interrupts temporarily
 	TachHandler_counts = MCPWM0.cap_chn[0].val - TachHandler_prev; // Calculate number of cycles between last pulse n and pulse n-1 (12.5ns/cycle)
 	
-	if (TachHandler_counts < 320000) // Ignore pulses shorter than 4ms (12.5ns*320000=250Hz)
+	if (TachHandler_counts < (320000/sparksPerRevolution)) // Ignore very short pulses (2-8ms)
 	{ 
 		TachHandler_counts = TachHandler_Counts_Prev;
 	}
@@ -119,7 +120,7 @@ int TachHandler::getRPM()
 	
 	double countsTemp = (double)countSorted[(countArraySize-1)/2];
 	
-	int rpm = (int)round(((1000000/((countsTemp*125)/10000))*60)); //Calculate RPM	
+	int rpm = (int)round((((1000000.0/((countsTemp*125.0)/10000.0))*60.0))/sparksPerRevolution); //Calculate RPM	
 	
 	if(rpm > TACH_RPM_MAX) 
 		return -1;

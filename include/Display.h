@@ -39,7 +39,7 @@
 #define RPM_MIN 0
 #define RPM_MAX 10000
 #define RPM_BG TFT_BLACK
-#define RPM_FG 0xfe20 //0x901f //TFT_MAGENTA
+#define RPM_FG 0xfe40 //0xc7e0 //0x7fe0 //0x981f //0xfe20 //0x901f //TFT_MAGENTA
 
 class DisplayHandler //Begin class definition
 {
