@@ -42,7 +42,7 @@
 
 **NOTE: The downloaded zip should be extracted and the repository folder should be renamed to ParamotorMultiSensor, and placed into your Arduino projects folder (probably /Documents/Arduino). i.e. You should have the folder /Documents/Arduino/ParamotorMultiSensor containing ParamotorMultiSensor.ino, /include, etc.** 
 
-**If the Arduino IDE asks if you want to create a folder for the project when you try to open it, something has gone wrong!**
+**If the Arduino IDE asks if you want to create a folder for the project when you try to open ParamotorMultiSensor.ino, something has gone wrong!**
 
 - [Arduino IDE 2.x](https://www.arduino.cc/en/software) (V2.3.2 Working)
 - [Espressif ESP32 Arduino Core](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html) (V2.14 Working) (Follow instructions to install from the Arduino IDE)
