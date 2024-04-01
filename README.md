@@ -38,15 +38,19 @@
 
 ### Prerequisites
 
+- [Download the ParamotorMultiSensor repository](https://github.com/simonrichards150/ParamotorMultiSensor/archive/refs/heads/main.zip)
+
+**NOTE: The downloaded zip should be extracted and the repository folder should be renamed to ParamotorMultiSensor, and placed into your Arduino projects folder (probably /Documents/Arduino). i.e. You should have the folder /Documents/Arduino/ParamotorMultiSensor containing ParamotorMultiSensor.ino, /include, etc.**
+
 - [Arduino IDE 2.x](https://www.arduino.cc/en/software) (V2.3.2 Working)
 - [Espressif ESP32 Arduino Core](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html) (V2.14 Working) (Follow instructions to install from the Arduino IDE)
 - [TFT_eSPI Library](https://github.com/Bodmer/TFT_eSPI) (V2.5.43 Working) (Available in Arduino library repository - install from Arduino IDE)
   
-**NOTE: TFT_eSPI Requires configuration by copying the contents of /include/TFT_eSPI_Config directory from this repository to your arduino libraries folder (probably /Documents/Arduino/libraries/TFT_eSPI) and overwriting existing files if prompted.**
+**NOTE: TFT_eSPI Requires configuration by copying the contents of /include/TFT_eSPI_Config directory from this repository to your Arduino libraries TFT_eSPI folder (probably /Documents/Arduino/libraries/TFT_eSPI) and overwriting existing files if prompted.**
 
 - [Adafruit MCP3421 Library](https://github.com/adafruit/Adafruit_MCP3421) (V1.0.0 Working) (Available in Arduino library repository - install from Arduino IDE)
 - [OneButton Library](https://github.com/mathertel/OneButton) (V2.5.0 Working) (Available in Arduino library repository - install from Arduino IDE)
-- [TMP1075 Library](https://github.com/PatrickBaus/Arduino-TMP1075) (V2.1.0 Working) (Requires manual install - copy repository to your arduino libraries folder (probably /Documents/Arduino/libraries))
+- [TMP1075 Library](https://github.com/PatrickBaus/Arduino-TMP1075) (V2.1.0 Working) (Requires manual install - copy repository to your Arduino libraries folder (probably /Documents/Arduino/libraries))
 
 ### Board Configuration
   
