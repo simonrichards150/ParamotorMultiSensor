@@ -4,7 +4,7 @@
 
 - [x] K-type thermocouple exhaust temperature sensing (-100°C - +800°C, cold junction -20°C - +70°C)
 - [x] RPM sensing (Input frequency 5Hz - 500Hz, configurable 0.5-2 sparks per revolution)
-- [x] GPS for location, speed, heading
+- [x] GPS for time, location, speed, heading
 - [x] Colour IPS display for real-time sensor data
 - [x] Warning light system for over-temperature events
 - [x] Logging data to MicroSD card
