@@ -1,7 +1,22 @@
 # Paramotor Multi Sensor
 
-## Prerequisites
+## Features
 
+- [x] K-type thermocouple exhaust temperature sensing (-100°C - +800°C, cold junction -20°C - +70°C)
+- [x] RPM sensing (Input frequency 5Hz - 500Hz, configurable 0.5-2 sparks per revolution)
+- [x] GPS for location, speed, heading
+- [x] Colour IPS display for real-time sensor data
+- [x] Warning light system for over-temperature events
+- [x] Logging data to MicroSD card
+- [x] Li-po battery and charge management (1000mAh)
+- [ ] Low-power sleep mode (xxx uA)
+- [ ] WiFi/Bluetooth connectivity
+
+## Programming
+
+### Prerequisites
+
+* [Arduino IDE 2.x](https://www.arduino.cc/en/software) (V2.3.2 Working)
 * [Espressif ESP32 Arduino Core](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html) (V2.14 Working) (Follow instructions to install from the Arduino IDE)
 * [TFT_eSPI Library](https://github.com/Bodmer/TFT_eSPI) (V2.5.43 Working) (Available in Arduino library repository - install from Arduino IDE)
   
@@ -11,7 +26,7 @@
 * [OneButton Library](https://github.com/mathertel/OneButton) (V2.5.0 Working) (Available in Arduino library repository - install from Arduino IDE)
 * [TMP1075 Library](https://github.com/PatrickBaus/Arduino-TMP1075) (V2.1.0 Working) (Requires manual install - copy repository to your arduino libraries folder (probably /Documents/Arduino/libraries))
 
-  ## Board Configuration Options
+  ### Board Configuration Options
 * Board: ESP32S3 Dev Module (from Espressif esp32 board package)
 * USB CDC On Boot: Enabled
 * CPU Frequency: 240MHz (Wifi)
