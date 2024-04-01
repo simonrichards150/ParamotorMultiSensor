@@ -67,4 +67,10 @@
 + Upload Mode: UART0/Hardware CDC
 + Upload Speed: 921600
 + USB Mode: Hardware CDC and JTAG	
-  
+
+# Credits
+
++ Simon Richards-Martin (Hardware, Firmware)
++ Mozes Baiden (Firmware)
++ Eden Agyemang (Firmware)
++ Joseph Odukoya (Mechanical)
