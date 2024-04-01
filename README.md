@@ -1,5 +1,5 @@
-# ParamotorMultiSensor
+# Paramotor Multi Sensor
 
-This repository is for the final application.
+## Prerequisites
 
-Please don't make any commits.
+* [Espressif ESP32 Arduino Core](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html).
