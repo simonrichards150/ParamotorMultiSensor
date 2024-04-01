@@ -20,10 +20,10 @@
 
 ### Display.h
 
-+ TEMPERATURE_MAX sets the minimum value of the temperature gauge 
-+ TEMPERATURE_MIN sets the maximum value of the temperature gauge  
-+ RPM_MAX sets the minimum value of the RPM gauge
-+ RPM_MIN sets the maximum value of the RPM gauge
++ TEMPERATURE_MAX sets the maximum value of the temperature gauge 
++ TEMPERATURE_MIN sets the minimum value of the temperature gauge  
++ RPM_MAX sets the maximum value of the RPM gauge
++ RPM_MIN sets the minimum value of the RPM gauge
 
 (Note: gauge mid-point markers are calculated automatically)
 
