@@ -32,7 +32,7 @@
 + amberThreshold sets the rising temperature threshold to switch from green to amber
 + redThreshold sets the rising temperature threshold to switch from amber to red
 
-(Note: rising thresholds are exact, falling thresholds are subject to hystseresis)
+(Note: rising thresholds are exact, falling thresholds are subject to hysteresis)
 
 ## Programming
 
