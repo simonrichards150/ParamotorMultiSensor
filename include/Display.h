@@ -41,6 +41,9 @@
 #define RPM_BG TFT_BLACK
 #define RPM_FG 0xfe40 //0xc7e0 //0x7fe0 //0x981f //0xfe20 //0x901f //TFT_MAGENTA
 
+#define VBAT_MAX 4100 //Bit lower than real to account for bad quality ADC
+#define VBAT_MIN 3100
+
 class DisplayHandler //Begin class definition
 {
 public:
@@ -260,17 +263,17 @@ void DisplayHandler::drawBatteryIndicator(int batt, bool chg)
 {
 	int pc = 0;
 	
-	if (batt >= 4200) //Full battery
+	if (batt >= VBAT_MAX) //Full battery
 	{
 		pc = 100;
 	}
-	else if (batt <= 3100) //Empty battery
+	else if (batt <= VBAT_MIN) //Empty battery
 	{
 		pc = 0;
 	}
 	else
 	{
-		pc = ((batt-3100)/1100.0)*100; //Calculate battery percentage
+		pc = ((float)(batt-VBAT_MIN)/(float)(VBAT_MAX-VBAT_MIN)*100.0); //Calculate battery percentage
 	}
 	
 	//Draw battery indicator
