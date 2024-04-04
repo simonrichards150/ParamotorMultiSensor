@@ -153,7 +153,7 @@ void TachHandler::enable(int en) //Turn the sensor on or off
 
 void TachHandler::sleep()
 {
-	
+	digitalWrite(TACH_EN, LOW); //Disable power to tachometer frontend (and internal fan)
 }
 
 #endif

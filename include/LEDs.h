@@ -202,7 +202,7 @@ double LEDHandler::getRedThreshold()
 
 void LEDHandler::sleep()
 {
-	
+	disable(); //LEDs off
 }
 
 

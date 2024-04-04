@@ -578,7 +578,7 @@ int GPSHandler::epochTime() //Get epoch time in time_t format - not synchronised
 
 void GPSHandler::sleep()
 {
-	
+	digitalWrite(GPS_EN, LOW); //Turn off the power to the GPS module (excluding backup power)
 }
 
 #endif

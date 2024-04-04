@@ -5,8 +5,6 @@
 #define TEMPERATURE_H
 
 #include <Arduino.h>
-
-//Include third-party libraries 
 #include <TMP1075.h>
 #include <Adafruit_MCP3421.h>
 
@@ -48,6 +46,7 @@ void TempHandler::begin() //Initialise and configure the ADC and TMP1075
 	adc.setMode(MODE_CONTINUOUS);
 	
 	tmp1075.begin(); // Initialise TMP1075 sensor
+	tmp1075.setConversionMode(false); //Continuous conversion mode
 }
 
 void TempHandler::enableFan()
@@ -55,19 +54,19 @@ void TempHandler::enableFan()
 	digitalWrite(TACH_EN, HIGH); // Turn the fan on by setting the TACH_EN pin HIGH
 }
 
-double TempHandler::getCJT()
+double TempHandler::getCJT() //Returns the cold junction temperature (temperature reported by TMP1075)
 {
 	return tmp1075.getTemperatureCelsius();
 }
 
-double TempHandler::getUnCompTemp()
+double TempHandler::getUnCompTemp() //Returns the uncompensated raw temperature reading from the thermocouple
 {
 	int16_t adcValue = adc.readADC();
 	double millivolts = (double)adcValue * 2048.0 / 131072.0 / 8.0;
 	return mVtoT(millivolts);
 }
 
-double TempHandler::getCompTemp()
+double TempHandler::getCompTemp() //Returns the thermocouple temperature with cold junction compensation applied
 {
 	int16_t adcValue = adc.readADC();
 	double millivolts = (double)adcValue * 2048.0 / 131072.0 / 8.0;
@@ -76,7 +75,8 @@ double TempHandler::getCompTemp()
 
 void TempHandler::sleep()
 {
-	
+	adc.setMode(MODE_ONE_SHOT); //One-shot mode will put the ADC to sleep 
+	tmp1075.setConversionMode(true); //Single-shot mode will put the sensor to sleep
 }
 
 //-------End main class functions - don't edit below this line--------

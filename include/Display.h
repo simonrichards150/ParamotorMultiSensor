@@ -505,7 +505,8 @@ void DisplayHandler::setBacklight(int pc)
 
 void DisplayHandler::sleep()
 {
-	
+	digitalWrite(LCD_BL, LOW); //Turn off the backlight
+	tft.writecommand(0x10); //Try to turn off LCD controller (seems to be ignored)
 }
 
 
