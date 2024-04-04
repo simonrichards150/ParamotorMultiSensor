@@ -11,7 +11,7 @@
 - [x] Warning light system for over-temperature events
 - [x] Logging data to MicroSD card
 - [x] Li-po battery and charge management (1000mAh - typical battery life 6 hours)
-- [ ] Low-power sleep mode (xxx uA)
+- [x] Low-power sleep mode (150 uA)
 - [ ] WiFi/Bluetooth connectivity
 
 ## User-configurable options
