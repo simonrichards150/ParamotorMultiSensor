@@ -18,7 +18,7 @@
 
 ### Tach.h
 
-+ sparksPerRevolution sets the number of sparks per revolution of the crankshaft (default: 2)
++ sparksPerRevolution sets the number of sparks per revolution of the crankshaft (default: 1)
 
 ### Display.h
 
