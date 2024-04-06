@@ -344,7 +344,7 @@ String MicroSDHandler::getCurrentTime(bool safeForFilename = false)
 
 void MicroSDHandler::sleep()
 {
-	//Nothing
+	stopLogging();
 }
 
 

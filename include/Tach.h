@@ -12,7 +12,7 @@
 #define TACH_RPM_MIN 300
 #define countArraySize 7
 #define countsSinceLastPulseLimit 10
-#define sparksPerRevolution 2
+#define sparksPerRevolution 1
 
 class TachHandler
 {
@@ -132,7 +132,7 @@ int TachHandler::getRPM()
 	
 	if (TachHandler_Cycles_Since_Last_Pulse > countsSinceLastPulseLimit) //Check if the MCPWM capture interrupt hasn't been called in a while (probably no input)
 	{
-		rpm = 0;
+		rpm = -1;
 	}
 	
 	return rpm; //Return RPM
